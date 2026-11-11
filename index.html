@@ -650,6 +650,60 @@ body[data-page="verify"] .dock,body[data-page="verify"] .chat-dock{display:none!
 .verify .auth-art img{transform:rotate(-3deg);filter:drop-shadow(0 24px 30px rgba(0,0,0,.5))}
 .verify .auth-art{height:clamp(170px,50vw,240px)}
 .verify .terms{font-size:13.5px;line-height:1.5}
+.msg.bot .who .inst{font-weight:600;color:var(--faint);font-size:12px;margin-left:2px}
+
+/* ============ ADMIN / BLOCKED / SALE ============ */
+.admin{max-width:760px;margin:0 auto;padding-bottom:140px}
+.adm-head h1{font-family:var(--serif);font-weight:500;font-size:clamp(40px,10vw,58px);line-height:1;margin-top:10px}
+.adm-count{color:var(--muted);margin-top:8px;font-weight:600}
+#admSeg{margin:22px 0 16px}
+.apane{display:none}.apane.on{display:block}
+.adm-card{padding:20px;margin-bottom:14px}
+.adm-l{display:block;font-weight:700;font-size:13.5px;margin-bottom:7px;color:var(--muted)}
+.adm-row{display:flex;gap:8px;align-items:center}.adm-row .tf{flex:1;min-width:0}.adm-row .btn{flex:none;height:56px}
+.adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.adm-f{min-width:0}.adm-f.wide{grid-column:1/-1}
+.admin select.tf{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+.admin .tf{height:50px;font-size:15px;color:var(--text)}
+.admin select.tf option{color:#111}
+.adm-msg{min-height:18px;margin-top:10px;font-size:13.5px;font-weight:600;color:var(--muted)}.adm-msg.bad{color:var(--danger)}.adm-msg.ok{color:var(--ok)}
+.adm-hint{color:var(--muted);font-size:14px;line-height:1.5;margin:4px 0 16px}
+.adm-state{font-weight:800;font-size:17px}
+.u-top{display:flex;gap:14px;align-items:center}
+.u-ava{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:22px;background:var(--grad);color:var(--on-grad);flex:none}
+.u-top b{display:block;font-size:18px}.u-top small{display:block;color:var(--muted);font-size:13.5px;word-break:break-all}
+.u-badges{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}
+.u-b{padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:800;background:var(--surface-2);border:1px solid var(--stroke)}
+.u-b.ok{color:var(--ok)}.u-b.bad{color:var(--danger)}.u-b.acc{color:var(--accent-ink)}
+.u-meta{color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:8px}
+.u-sec{border-top:1px solid var(--stroke);margin-top:16px;padding-top:16px}
+.u-sec h4{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.u-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.u-actions .btn{height:44px;padding:0 16px;font-size:14px}
+.btn-danger{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent)}
+.pc-item{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:8px}
+.pc-item .pc-c{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800;font-size:16px;letter-spacing:.04em}
+.pc-item small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.pc-item .pc-txt{flex:1;min-width:0}
+.pc-item button{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--faint)}
+.pc-item button:hover{background:var(--surface-2);color:var(--text)}
+.pc-item button svg{width:17px;height:17px}
+.blocked{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:24px;background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.blocked[hidden]{display:none}
+.blk-card{width:100%;max-width:420px;text-align:center}
+.blk-art{width:min(300px,80%);height:auto;filter:drop-shadow(0 24px 30px rgba(0,0,0,.5));margin:0 auto 6px;display:block}
+.blk-card h2{font-family:var(--serif);font-weight:500;font-size:clamp(34px,9vw,46px);line-height:1.05}
+.blk-card p{color:var(--muted);font-size:15.5px;line-height:1.55;margin-top:12px}
+.blk-reason{font-size:14px!important;color:var(--faint)!important}
+.blk-mail{display:inline-block;margin:14px 0 18px;font-weight:800;font-size:17px;color:var(--accent-ink);text-decoration:none;word-break:break-all}
+.blk-card .btn{margin-top:10px}
+body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
+.sale-pill{display:inline-flex;align-items:center;gap:8px;margin:14px auto 0;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;color:var(--on-grad);background:var(--grad);text-decoration:none;box-shadow:0 10px 26px -14px rgba(242,168,196,.8)}
+.sale-pill[hidden]{display:none}
+#homeSale{display:flex;width:max-content;max-width:100%}
+.plans-head .sale-pill{margin-top:14px}
+.price s{color:var(--faint);font-size:18px;font-weight:700;margin-left:2px}
+.price .disc{align-self:center;padding:4px 9px;border-radius:999px;font-size:12.5px;font-weight:800;background:var(--grad);color:var(--on-grad)}
 </style>
 </head>
 <body data-page="home">
@@ -834,6 +888,7 @@ body[data-page="verify"] .dock,body[data-page="verify"] .chat-dock{display:none!
 <section class="page" data-page="home">
   <h1 class="greet" id="greet"></h1>
   <p class="sub" data-i18n="home.sub"></p>
+  <a class="sale-pill" id="homeSale" href="#/profile/plans" hidden></a>
 
   <div class="seg" id="modeSeg" role="tablist">
     <span class="thumb"></span>
@@ -1022,6 +1077,7 @@ body[data-page="verify"] .dock,body[data-page="verify"] .chat-dock{display:none!
       <span class="eyebrow acc" data-i18n="plans.kicker"></span>
       <h3 data-i18n="plans.title"></h3>
       <p data-i18n="plans.sub"></p>
+      <div class="sale-pill" id="plansSale" hidden></div>
       <div class="seg small" id="curSeg" style="margin-top:4px">
         <span class="thumb"></span>
         <button data-cur="rub">₽ RUB</button><button data-cur="usd">$ USD</button><button data-cur="uah">₴ UAH</button>
@@ -1074,6 +1130,7 @@ body[data-page="verify"] .dock,body[data-page="verify"] .chat-dock{display:none!
         <div class="set-row"><label class="lbl" for="setName" data-i18n="set.name"></label><input class="inline-input" id="setName" maxlength="40" autocomplete="name"></div>
         <div class="set-row"><span class="lbl" data-i18n="set.email"></span><span class="val" id="setEmail"></span></div>
         <div class="set-row"><span class="lbl" data-i18n="set.plan"></span><a class="val" href="#/profile/plans" id="setPlan" style="color:var(--accent-ink);font-weight:700;text-decoration:none">Spark →</a></div>
+        <div class="set-row" id="setAdminRow" hidden><span class="lbl" data-i18n="set.admin"></span><a class="val" href="#/admin" style="color:var(--accent-ink);font-weight:700;text-decoration:none">→</a></div>
       </div>
       <div class="card set-group">
         <span class="eyebrow" data-i18n="set.look"></span>
@@ -1172,6 +1229,60 @@ body[data-page="verify"] .dock,body[data-page="verify"] .chat-dock{display:none!
 </section>
 
 <!-- ================= SECTION PLACEHOLDER ================= -->
+<section class="page admin" data-page="admin">
+  <div class="adm-head">
+    <span class="eyebrow acc" data-i18n="adm.k"></span>
+    <h1 data-i18n="adm.t"></h1>
+    <p class="adm-count" id="admCount"></p>
+  </div>
+  <div class="seg small" id="admSeg"><span class="thumb"></span><button type="button" data-atab="users" data-i18n="adm.users"></button><button type="button" data-atab="promos" data-i18n="adm.promos"></button><button type="button" data-atab="sale" data-i18n="adm.sale"></button></div>
+
+  <div class="apane on" data-apane="users">
+    <div class="card adm-card">
+      <label class="adm-l" for="admQ" data-i18n="adm.find"></label>
+      <div class="adm-row"><input class="tf" id="admQ" type="email" inputmode="email" placeholder="name@gmail.com" autocomplete="off"><button type="button" class="btn btn-primary" id="admFind" data-i18n="adm.findBtn"></button></div>
+      <p class="adm-msg" id="admMsg"></p>
+    </div>
+    <div id="admUser"></div>
+  </div>
+
+  <div class="apane" data-apane="promos">
+    <div class="card adm-card">
+      <div class="adm-grid">
+        <div class="adm-f wide"><label class="adm-l" data-i18n="adm.code"></label><div class="adm-row"><input class="tf" id="pcCode" maxlength="32" autocomplete="off" style="text-transform:uppercase"><button type="button" class="btn btn-ghost" id="pcGen" data-i18n="adm.gen"></button></div></div>
+        <div class="adm-f wide"><label class="adm-l" data-i18n="adm.type"></label><select class="tf" id="pcType"><option value="tokens" data-i18n="adm.tTokens"></option><option value="plan" data-i18n="adm.tPlan"></option><option value="discount" data-i18n="adm.tDisc"></option></select></div>
+        <div class="adm-f" id="pcValW"><label class="adm-l" id="pcValL"></label><input class="tf" id="pcVal" type="number" inputmode="numeric" min="0"></div>
+        <div class="adm-f" id="pcPlanW"><label class="adm-l" data-i18n="adm.forPlan"></label><select class="tf" id="pcPlan"><option value="orbit">Orbit</option><option value="nova">Nova</option><option value="cosmos">Cosmos</option></select></div>
+        <div class="adm-f" id="pcPlansW"><label class="adm-l" data-i18n="adm.forPlans"></label><select class="tf" id="pcPlans"><option value="all" data-i18n="adm.all"></option><option value="orbit">Orbit</option><option value="nova">Nova</option><option value="cosmos">Cosmos</option></select></div>
+        <div class="adm-f" id="pcDaysW"><label class="adm-l" data-i18n="adm.pdays"></label><input class="tf" id="pcDays" type="number" inputmode="numeric" min="1" value="30"></div>
+        <div class="adm-f"><label class="adm-l" data-i18n="adm.max"></label><input class="tf" id="pcMax" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="adm-f"><label class="adm-l" data-i18n="adm.exp"></label><input class="tf" id="pcExp" type="date"></div>
+        <div class="adm-f wide"><label class="adm-l" data-i18n="adm.note"></label><input class="tf" id="pcNote" maxlength="120"></div>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" id="pcCreate" data-i18n="adm.create"></button>
+      <p class="adm-msg" id="pcMsg"></p>
+    </div>
+    <div id="pcList"></div>
+  </div>
+
+  <div class="apane" data-apane="sale">
+    <div class="card adm-card">
+      <p class="adm-state" id="saleState"></p>
+      <p class="adm-hint" data-i18n="adm.saleHint"></p>
+      <div class="adm-grid">
+        <div class="adm-f"><label class="adm-l" data-i18n="adm.salePct"></label><input class="tf" id="slPct" type="number" inputmode="numeric" min="1" max="90"></div>
+        <div class="adm-f"><label class="adm-l" data-i18n="adm.forPlans"></label><select class="tf" id="slPlans"><option value="all" data-i18n="adm.all"></option><option value="orbit">Orbit</option><option value="nova">Nova</option><option value="cosmos">Cosmos</option></select></div>
+        <div class="adm-f wide"><label class="adm-l" data-i18n="adm.saleUntil"></label><input class="tf" id="slUntil" type="date"></div>
+        <div class="adm-f wide"><label class="adm-l" id="slTRu"></label><input class="tf" id="slTextRu" maxlength="140"></div>
+        <div class="adm-f wide"><label class="adm-l" id="slTEn"></label><input class="tf" id="slTextEn" maxlength="140"></div>
+        <div class="adm-f wide"><label class="adm-l" id="slTUk"></label><input class="tf" id="slTextUk" maxlength="140"></div>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" id="slSave" data-i18n="adm.saleSave"></button>
+      <button type="button" class="btn btn-ghost btn-block" id="slOff" data-i18n="adm.saleOff" style="margin-top:10px"></button>
+      <p class="adm-msg" id="slMsg"></p>
+    </div>
+  </div>
+</section>
 <section class="page" data-page="section">
   <div class="soon">
     <div class="art-slot soon-art" data-asset="empty-section"><svg viewBox="0 0 260 200" aria-hidden="true" id="soonArt">
@@ -1189,6 +1300,18 @@ body[data-page="verify"] .dock,body[data-page="verify"] .chat-dock{display:none!
 </main>
 
 <button type="button" class="to-bottom" id="toBottom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5.5 12.5L12 19l6.5-6.5"/></svg><span data-i18n="chat.toBottom"></span></button>
+<div class="blocked" id="blocked" hidden>
+  <div class="blk-card">
+    <img class="blk-art" id="blkArt" alt="">
+    <h2 id="blkTitle"></h2>
+    <p id="blkText"></p>
+    <p class="blk-reason" id="blkReason"></p>
+    <a class="blk-mail" id="blkAddr" href="mailto:mundoraaiapp@gmail.com">mundoraaiapp@gmail.com</a>
+    <a class="btn btn-primary btn-block" id="blkMail" href="mailto:mundoraaiapp@gmail.com"><span data-i18n="blk.mail"></span></a>
+    <button type="button" class="btn btn-ghost btn-block" id="blkCopy" data-i18n="blk.copy"></button>
+    <button type="button" class="forgot" id="blkOut" data-i18n="blk.out"></button>
+  </div>
+</div>
 <!-- chat composer (fixed) -->
 <div class="chat-dock">
   <div class="composer">
@@ -1322,7 +1445,7 @@ en:{
  'auth.name':'Name','auth.namePh':'What should we call you?','auth.email':'Email','auth.pass':'Password','auth.passPh':'At least 6 characters',
  'auth.forgot':'Forgot password?','auth.or':'or','auth.google':'Continue with Google','auth.noAcc':'No account yet?','auth.haveAcc':'Already have an account?',
  'auth.terms':'By signing up you agree to the Terms and the Privacy Policy.',
- 'e.net':'No connection to the server — check your internet','e.bad':'Wrong email or password','e.many':'Too many attempts — try again later','toast.reset':'Reset link sent — check your email','toast.relogin':'Please sign in again, then delete the account','e.gfail':'Google sign-in failed — try again','m.loading':'Loading models…','m.fail':'Couldn’t load the model list from the server — showing the main models.','m.retry':'Retry','m.none':'Nothing found','m.anth':'Anthropic','m.oai':'OpenAI','m.copy':'Copy','m.copied':'Copied','m.preview':'Open','m.err.net':'No connection to the AI server. Check your internet and try again.','m.err.key':'The AI server rejected the request (access key).','m.err.model':'This model is unavailable right now — pick another one.','m.err.rate':'Too many requests — wait a moment and try again.','m.err.up':'The model’s provider is temporarily unavailable ({e}). Try again in a minute or pick another model.','m.err.other':'Something went wrong: {e}','m.stopped':'Stopped','e.name':'Enter your name','e.email':'Enter a valid email','e.pass':'Password must be at least 6 characters','e.exists':'This email is already registered — sign in instead','e.noacc':'No account with this email yet','e.wrong':'Wrong password',
+ 'e.net':'No connection to the server — check your internet','e.bad':'Wrong email or password','e.many':'Too many attempts — try again later','toast.reset':'Reset link sent — check your email','toast.relogin':'Please sign in again, then delete the account','e.gfail':'Google sign-in failed — try again','m.loading':'Loading models…','m.fail':'Couldn’t load the model list from the server — showing the main models.','m.retry':'Retry','m.none':'Nothing found','m.anth':'Anthropic','m.oai':'OpenAI','m.copyFail':'Couldn’t copy — press and hold the text to copy it','m.instead':'· instead of {m} (it was unavailable)','m.copy':'Copy','m.copied':'Copied','m.preview':'Open','m.err.net':'No connection to the AI server. Check your internet and try again.','m.err.key':'The AI server rejected the request (access key).','m.err.model':'This model is unavailable right now — pick another one.','m.err.rate':'Too many requests — wait a moment and try again.','m.err.up':'The model’s provider is temporarily unavailable ({e}). Try again in a minute or pick another model.','m.err.other':'Something went wrong: {e}','m.stopped':'Stopped','e.name':'Enter your name','e.email':'Enter a valid email','e.pass':'Password must be at least 6 characters','e.exists':'This email is already registered — sign in instead','e.noacc':'No account with this email yet','e.wrong':'Wrong password',
  'toast.google':'Google sign-in will work once the server is connected','toast.forgot':'Password recovery will work once the server is connected','toast.welcome':'Welcome, {name}!','toast.out':'You signed out','toast.saved':'Saved','toast.deleted':'Account deleted','toast.soon':'Coming soon',
  'nav.home':'Home','nav.chat':'Chat','nav.projects':'Projects','nav.profile':'Profile','nav.menu':'Menu',
  'greet.morning':'Good morning','greet.day':'Good afternoon','greet.evening':'Good evening','greet.night':'Good night',
@@ -1339,7 +1462,7 @@ en:{
  'chat.new':'New conversation','chat.history':'History','chat.emptyT':'Start a conversation','chat.emptyS':'Ask a question, brainstorm an idea or paste a text — Mundora will take it from there.','chat.ph':'Message Mundora…',
  'chat.noModel':'No model is connected yet. As soon as models are available, they’ll appear in the model picker — and I’ll answer right here.',
  'models.title':'Model','models.search':'Name or ID','models.emptyT':'Models are on their way','models.emptyS':'We’re connecting the first models. They’ll show up here soon.',
- 'chat.toBottom':'To the latest message','chat.editing':'Editing message','chat.copy':'Copy','chat.edit':'Edit','chat.regen':'Regenerate','hist.today':'Today','hist.earlier':'Earlier','hist.del':'Delete','v.nomail':'Email codes aren’t set up on the server yet (BREVO_API_KEY / MAIL_FROM in Vercel).','v.nostore':'The database isn’t connected on the server yet (Upstash in Vercel → Storage).','v.server':'Server error: {e}','v.k':'Almost there','v.t':'Check your email','v.lead':'We sent a 6-digit code to {email}. Enter it below to confirm your account.','v.btn':'Confirm','v.resend':'Send the code again','v.resendIn':'Send again in {t}','v.bad':'Wrong code. Attempts left: {n}','v.short':'Enter all 6 digits','v.expired':'The code has expired — send a new one','v.attempts':'Too many attempts — send a new code','v.hour':'Too many codes — try again in an hour','v.mailfail':'Couldn’t send the email. Try again a bit later.','v.sent':'New code sent','v.spam':'No email yet? Wait a minute and check Spam, Promotions or Updates — it sometimes lands there.','v.wrong':'Wrong email?','v.out':'Sign out','m.err.verify':'Confirm your email to start chatting.','hist.emptyT':'No conversations yet','hist.emptyS':'Your chats will be saved here so you can come back to them.',
+ 'chat.toBottom':'To the latest message','chat.editing':'Editing message','chat.copy':'Copy','chat.edit':'Edit','chat.regen':'Regenerate','hist.today':'Today','hist.earlier':'Earlier','hist.del':'Delete','v.nomail':'Email codes aren’t set up on the server yet (BREVO_API_KEY / MAIL_FROM in Vercel).','v.nostore':'The database isn’t connected on the server yet (Upstash in Vercel → Storage).','v.server':'Server error: {e}','v.k':'Almost there','v.t':'Check your email','v.lead':'We sent a 6-digit code to {email}. Enter it below to confirm your account.','v.btn':'Confirm','v.resend':'Send the code again','v.resendIn':'Send again in {t}','v.bad':'Wrong code. Attempts left: {n}','v.short':'Enter all 6 digits','v.expired':'The code has expired — send a new one','v.attempts':'Too many attempts — send a new code','v.hour':'Too many codes — try again in an hour','v.mailfail':'Couldn’t send the email. Try again a bit later.','v.sent':'New code sent','v.spam':'No email yet? Wait a minute and check Spam, Promotions or Updates — it sometimes lands there.','v.wrong':'Wrong email?','v.out':'Sign out','m.err.verify':'Confirm your email to start chatting.','adm.k':'Admin panel','adm.t':'Control room','adm.users':'Users','adm.promos':'Promo codes','adm.sale':'Sale','adm.count':'Accounts: {n}','adm.find':'Find by email','adm.findBtn':'Find','adm.nouser':'No account with this email yet — the person has to sign in at least once.','adm.plan':'Plan','adm.forever':'forever','adm.until':'until {d}','adm.days':'days (0 = forever)','adm.give':'Give plan','adm.take':'Take away subscription','adm.tokens':'Bonus tokens','adm.add':'Add','adm.tokHint':'a minus number takes tokens away','adm.disc':'Personal discount','adm.discBtn':'Give discount','adm.pct':'%','adm.status':'Account','adm.active':'Active','adm.frozen':'Frozen','adm.deleted':'Deleted','adm.reason':'Reason (optional)','adm.freeze':'Freeze','adm.delete':'Delete (ban)','adm.restore':'Unban / restore','adm.reset':'Reset limits','adm.used':'Used: 5 h — {w}, month — {m}','adm.bonus':'Bonus: {n}','adm.seen':'Last visit: {d}','adm.saved':'Saved','adm.confirmDel':'Delete (ban) this account?','adm.code':'Code','adm.gen':'Generate','adm.type':'What it gives','adm.tTokens':'Bonus tokens','adm.tPlan':'Plan for N days','adm.tDisc':'Discount on plans','adm.value':'Amount','adm.valTok':'tokens','adm.valPct':'percent','adm.forPlan':'Plan','adm.forPlans':'For plans','adm.all':'All plans','adm.pdays':'Days','adm.max':'Max uses (0 = no limit)','adm.exp':'Valid until (empty = no end)','adm.note':'Note for you','adm.create':'Create code','adm.none':'No codes yet','adm.uses':'used {u}{m}','adm.expd':'until {d}','adm.del':'Delete','adm.saleHint':'A sale lowers plan prices for everyone and shows a banner on the site.','adm.salePct':'Discount, %','adm.saleUntil':'Ends (empty = until you turn it off)','adm.saleText':'Banner text ({l})','adm.saleSave':'Start / update sale','adm.saleOff':'Turn the sale off','adm.saleOn':'Sale is on: −{p}%','adm.saleNone':'No sale right now','set.admin':'Admin panel','blk.frozen':'Account frozen','blk.deleted':'Account deleted','blk.fs':'frozen','blk.ds':'deleted','blk.text':'Your account «{name}» has been {state}. If you think this is a mistake, write to our support:','blk.reason':'Reason: {r}','blk.mail':'Write to support','blk.copy':'Copy address','blk.copied':'Address copied','blk.out':'Sign out','sale.def':'Sale: −{p}% on plans','sale.until':'until {d}','promo.disc':'Done! −{p}% on plans for {days} days','promo.nostore':'Promo codes start working once the database is connected (Upstash in Vercel → Storage)','promo.out':'This code has run out','promo.expired':'This code has expired','disc.badge':'−{p}%','hist.emptyT':'No conversations yet','hist.emptyS':'Your chats will be saved here so you can come back to them.',
  'proj.kicker':'Total projects','proj.title':'Projects','proj.lead':'Every generation and every edit is saved as its own version — you can always roll back.','proj.newSite':'New site','proj.slides':'Presentation',
  'proj.tabs':['All','Sites','Code','Presentations','Games'],'proj.search':'Search by name or description','proj.count':'Projects:','proj.sort':'Recently updated',
  'proj.emptyT':'Your first project will live here','proj.emptyS':'Create a site, presentation, program or game. Every saved version stays right here.','proj.emptyBtn':'Create project',
@@ -1379,7 +1502,7 @@ ru:{
  'auth.name':'Имя','auth.namePh':'Как к вам обращаться?','auth.email':'Почта','auth.pass':'Пароль','auth.passPh':'Минимум 6 символов',
  'auth.forgot':'Забыли пароль?','auth.or':'или','auth.google':'Продолжить с Google','auth.noAcc':'Нет аккаунта?','auth.haveAcc':'Уже есть аккаунт?',
  'auth.terms':'Регистрируясь, вы принимаете условия использования и политику конфиденциальности.',
- 'e.net':'Нет связи с сервером — проверьте интернет','e.bad':'Неверная почта или пароль','e.many':'Слишком много попыток — попробуйте позже','toast.reset':'Ссылка для сброса отправлена — проверьте почту','toast.relogin':'Войдите заново и повторите удаление аккаунта','e.gfail':'Не удалось войти через Google — попробуйте ещё раз','m.loading':'Загружаю модели…','m.fail':'Не удалось загрузить список моделей с сервера — показываю основные.','m.retry':'Повторить','m.none':'Ничего не найдено','m.anth':'Anthropic','m.oai':'OpenAI','m.copy':'Копировать','m.copied':'Скопировано','m.preview':'Открыть','m.err.net':'Нет связи с ИИ-сервером. Проверьте интернет и попробуйте ещё раз.','m.err.key':'ИИ-сервер отклонил запрос (ключ доступа).','m.err.model':'Эта модель сейчас недоступна — выберите другую.','m.err.rate':'Слишком много запросов — подождите немного и повторите.','m.err.up':'Поставщик этой модели сейчас недоступен ({e}). Попробуйте через минуту или выберите другую модель.','m.err.other':'Что-то пошло не так: {e}','m.stopped':'Остановлено','e.name':'Введите имя','e.email':'Введите корректную почту','e.pass':'Пароль — минимум 6 символов','e.exists':'Эта почта уже зарегистрирована — войдите','e.noacc':'Аккаунта с такой почтой пока нет','e.wrong':'Неверный пароль',
+ 'e.net':'Нет связи с сервером — проверьте интернет','e.bad':'Неверная почта или пароль','e.many':'Слишком много попыток — попробуйте позже','toast.reset':'Ссылка для сброса отправлена — проверьте почту','toast.relogin':'Войдите заново и повторите удаление аккаунта','e.gfail':'Не удалось войти через Google — попробуйте ещё раз','m.loading':'Загружаю модели…','m.fail':'Не удалось загрузить список моделей с сервера — показываю основные.','m.retry':'Повторить','m.none':'Ничего не найдено','m.anth':'Anthropic','m.oai':'OpenAI','m.copyFail':'Не получилось скопировать — зажмите текст, чтобы скопировать вручную','m.instead':'· вместо {m} (она была недоступна)','m.copy':'Копировать','m.copied':'Скопировано','m.preview':'Открыть','m.err.net':'Нет связи с ИИ-сервером. Проверьте интернет и попробуйте ещё раз.','m.err.key':'ИИ-сервер отклонил запрос (ключ доступа).','m.err.model':'Эта модель сейчас недоступна — выберите другую.','m.err.rate':'Слишком много запросов — подождите немного и повторите.','m.err.up':'Поставщик этой модели сейчас недоступен ({e}). Попробуйте через минуту или выберите другую модель.','m.err.other':'Что-то пошло не так: {e}','m.stopped':'Остановлено','e.name':'Введите имя','e.email':'Введите корректную почту','e.pass':'Пароль — минимум 6 символов','e.exists':'Эта почта уже зарегистрирована — войдите','e.noacc':'Аккаунта с такой почтой пока нет','e.wrong':'Неверный пароль',
  'toast.google':'Вход через Google заработает после подключения сервера','toast.forgot':'Восстановление пароля заработает после подключения сервера','toast.welcome':'Добро пожаловать, {name}!','toast.out':'Вы вышли из аккаунта','toast.saved':'Сохранено','toast.deleted':'Аккаунт удалён','toast.soon':'Скоро',
  'nav.home':'Главная','nav.chat':'Чат','nav.projects':'Проекты','nav.profile':'Профиль','nav.menu':'Меню',
  'greet.morning':'Доброе утро','greet.day':'Добрый день','greet.evening':'Добрый вечер','greet.night':'Доброй ночи',
@@ -1396,7 +1519,7 @@ ru:{
  'chat.new':'Новый разговор','chat.history':'История','chat.emptyT':'Начните разговор','chat.emptyS':'Задайте вопрос, обсудите идею или вставьте текст — Mundora подхватит.','chat.ph':'Сообщение для Mundora…',
  'chat.noModel':'Модель пока не подключена. Как только модели появятся, они будут в списке выбора — и я отвечу прямо здесь.',
  'models.title':'Модель','models.search':'Название или ID','models.emptyT':'Модели уже в пути','models.emptyS':'Мы подключаем первые модели — скоро они появятся здесь.',
- 'chat.toBottom':'К последнему сообщению','chat.editing':'Редактирование сообщения','chat.copy':'Копировать','chat.edit':'Изменить','chat.regen':'Ответить заново','hist.today':'Сегодня','hist.earlier':'Ранее','hist.del':'Удалить','v.nomail':'На сервере ещё не настроена отправка кодов (BREVO_API_KEY и MAIL_FROM в Vercel).','v.nostore':'На сервере ещё не подключена база (Upstash в Vercel → Storage).','v.server':'Ошибка сервера: {e}','v.k':'Почти готово','v.t':'Проверьте почту','v.lead':'Мы отправили 6-значный код на {email}. Введите его ниже, чтобы подтвердить аккаунт.','v.btn':'Подтвердить','v.resend':'Отправить код ещё раз','v.resendIn':'Отправить снова через {t}','v.bad':'Неверный код. Осталось попыток: {n}','v.short':'Введите все 6 цифр','v.expired':'Код устарел — отправьте новый','v.attempts':'Слишком много попыток — отправьте новый код','v.hour':'Слишком много кодов — попробуйте через час','v.mailfail':'Не удалось отправить письмо. Попробуйте чуть позже.','v.sent':'Новый код отправлен','v.spam':'Письма нет? Подождите минуту и загляните в «Спам», «Промоакции» или «Оповещения» — иногда оно попадает туда.','v.wrong':'Не та почта?','v.out':'Выйти','m.err.verify':'Подтвердите почту, чтобы начать общение.','hist.emptyT':'Пока нет разговоров','hist.emptyS':'Здесь будут сохраняться ваши чаты, чтобы к ним можно было вернуться.',
+ 'chat.toBottom':'К последнему сообщению','chat.editing':'Редактирование сообщения','chat.copy':'Копировать','chat.edit':'Изменить','chat.regen':'Ответить заново','hist.today':'Сегодня','hist.earlier':'Ранее','hist.del':'Удалить','v.nomail':'На сервере ещё не настроена отправка кодов (BREVO_API_KEY и MAIL_FROM в Vercel).','v.nostore':'На сервере ещё не подключена база (Upstash в Vercel → Storage).','v.server':'Ошибка сервера: {e}','v.k':'Почти готово','v.t':'Проверьте почту','v.lead':'Мы отправили 6-значный код на {email}. Введите его ниже, чтобы подтвердить аккаунт.','v.btn':'Подтвердить','v.resend':'Отправить код ещё раз','v.resendIn':'Отправить снова через {t}','v.bad':'Неверный код. Осталось попыток: {n}','v.short':'Введите все 6 цифр','v.expired':'Код устарел — отправьте новый','v.attempts':'Слишком много попыток — отправьте новый код','v.hour':'Слишком много кодов — попробуйте через час','v.mailfail':'Не удалось отправить письмо. Попробуйте чуть позже.','v.sent':'Новый код отправлен','v.spam':'Письма нет? Подождите минуту и загляните в «Спам», «Промоакции» или «Оповещения» — иногда оно попадает туда.','v.wrong':'Не та почта?','v.out':'Выйти','m.err.verify':'Подтвердите почту, чтобы начать общение.','adm.k':'Админ-панель','adm.t':'Управление','adm.users':'Пользователи','adm.promos':'Промокоды','adm.sale':'Акция','adm.count':'Аккаунтов: {n}','adm.find':'Найти по почте','adm.findBtn':'Найти','adm.nouser':'Аккаунта с такой почтой пока нет — человек должен хотя бы раз войти на сайт.','adm.plan':'Тариф','adm.forever':'навсегда','adm.until':'до {d}','adm.days':'дней (0 = навсегда)','adm.give':'Выдать тариф','adm.take':'Забрать подписку','adm.tokens':'Бонусные токены','adm.add':'Начислить','adm.tokHint':'число с минусом забирает токены','adm.disc':'Личная скидка','adm.discBtn':'Дать скидку','adm.pct':'%','adm.status':'Аккаунт','adm.active':'Активен','adm.frozen':'Заморожен','adm.deleted':'Удалён','adm.reason':'Причина (необязательно)','adm.freeze':'Заморозить','adm.delete':'Удалить (бан)','adm.restore':'Разбанить / восстановить','adm.reset':'Сбросить лимиты','adm.used':'Потрачено: 5 ч — {w}, месяц — {m}','adm.bonus':'Бонусы: {n}','adm.seen':'Последний визит: {d}','adm.saved':'Сохранено','adm.confirmDel':'Удалить (забанить) этот аккаунт?','adm.code':'Код','adm.gen':'Придумать','adm.type':'Что даёт','adm.tTokens':'Бонусные токены','adm.tPlan':'Тариф на N дней','adm.tDisc':'Скидку на тарифы','adm.value':'Сколько','adm.valTok':'токенов','adm.valPct':'процентов','adm.forPlan':'Тариф','adm.forPlans':'На тарифы','adm.all':'Все тарифы','adm.pdays':'Дней','adm.max':'Сколько раз можно использовать (0 = без ограничений)','adm.exp':'Действует до (пусто = бессрочно)','adm.note':'Заметка для себя','adm.create':'Создать код','adm.none':'Кодов пока нет','adm.uses':'использован {u}{m}','adm.expd':'до {d}','adm.del':'Удалить','adm.saleHint':'Акция снижает цены тарифов для всех и показывает плашку на сайте.','adm.salePct':'Скидка, %','adm.saleUntil':'Закончится (пусто = пока не выключите)','adm.saleText':'Текст плашки ({l})','adm.saleSave':'Запустить / обновить акцию','adm.saleOff':'Выключить акцию','adm.saleOn':'Акция идёт: −{p}%','adm.saleNone':'Сейчас акции нет','set.admin':'Админ-панель','blk.frozen':'Аккаунт заморожен','blk.deleted':'Аккаунт удалён','blk.fs':'заморожен','blk.ds':'удалён','blk.text':'Ваш аккаунт «{name}» {state}. Если вы считаете, что это ошибка, напишите в поддержку:','blk.reason':'Причина: {r}','blk.mail':'Написать в поддержку','blk.copy':'Скопировать адрес','blk.copied':'Адрес скопирован','blk.out':'Выйти','sale.def':'Акция: −{p}% на тарифы','sale.until':'до {d}','promo.disc':'Готово! −{p}% на тарифы на {days} дн.','promo.nostore':'Промокоды заработают после подключения базы (Upstash в Vercel → Storage)','promo.out':'Этот код уже закончился','promo.expired':'Срок действия кода истёк','disc.badge':'−{p}%','hist.emptyT':'Пока нет разговоров','hist.emptyS':'Здесь будут сохраняться ваши чаты, чтобы к ним можно было вернуться.',
  'proj.kicker':'Всего проектов','proj.title':'Проекты','proj.lead':'Каждая генерация и каждая правка сохраняются отдельной версией — откатиться можно всегда.','proj.newSite':'Новый сайт','proj.slides':'Презентация',
  'proj.tabs':['Все','Сайты','Код','Презентации','Игры'],'proj.search':'Поиск по названию или описанию','proj.count':'Проектов:','proj.sort':'Сначала обновлённые',
  'proj.emptyT':'Здесь появится ваш первый проект','proj.emptyS':'Создайте сайт, презентацию, программу или игру. Все сохранённые версии останутся здесь.','proj.emptyBtn':'Создать проект',
@@ -1436,7 +1559,7 @@ uk:{
  'auth.name':'Ім’я','auth.namePh':'Як до вас звертатися?','auth.email':'Пошта','auth.pass':'Пароль','auth.passPh':'Щонайменше 6 символів',
  'auth.forgot':'Забули пароль?','auth.or':'або','auth.google':'Продовжити з Google','auth.noAcc':'Немає акаунта?','auth.haveAcc':'Вже маєте акаунт?',
  'auth.terms':'Реєструючись, ви приймаєте умови використання та політику конфіденційності.',
- 'e.net':'Немає зв’язку із сервером — перевірте інтернет','e.bad':'Невірна пошта або пароль','e.many':'Забагато спроб — спробуйте пізніше','toast.reset':'Посилання для скидання надіслано — перевірте пошту','toast.relogin':'Увійдіть знову та повторіть видалення акаунта','e.gfail':'Не вдалося увійти через Google — спробуйте ще раз','m.loading':'Завантажую моделі…','m.fail':'Не вдалося завантажити список моделей із сервера — показую основні.','m.retry':'Повторити','m.none':'Нічого не знайдено','m.anth':'Anthropic','m.oai':'OpenAI','m.copy':'Копіювати','m.copied':'Скопійовано','m.preview':'Відкрити','m.err.net':'Немає зв’язку з ІІ-сервером. Перевірте інтернет і спробуйте ще раз.','m.err.key':'ІІ-сервер відхилив запит (ключ доступу).','m.err.model':'Ця модель зараз недоступна — оберіть іншу.','m.err.rate':'Забагато запитів — зачекайте трохи й повторіть.','m.err.up':'Постачальник цієї моделі зараз недоступний ({e}). Спробуйте за хвилину або оберіть іншу модель.','m.err.other':'Щось пішло не так: {e}','m.stopped':'Зупинено','e.name':'Введіть ім’я','e.email':'Введіть коректну пошту','e.pass':'Пароль — щонайменше 6 символів','e.exists':'Ця пошта вже зареєстрована — увійдіть','e.noacc':'Акаунта з такою поштою поки немає','e.wrong':'Невірний пароль',
+ 'e.net':'Немає зв’язку із сервером — перевірте інтернет','e.bad':'Невірна пошта або пароль','e.many':'Забагато спроб — спробуйте пізніше','toast.reset':'Посилання для скидання надіслано — перевірте пошту','toast.relogin':'Увійдіть знову та повторіть видалення акаунта','e.gfail':'Не вдалося увійти через Google — спробуйте ще раз','m.loading':'Завантажую моделі…','m.fail':'Не вдалося завантажити список моделей із сервера — показую основні.','m.retry':'Повторити','m.none':'Нічого не знайдено','m.anth':'Anthropic','m.oai':'OpenAI','m.copyFail':'Не вдалося скопіювати — затисніть текст, щоб скопіювати вручну','m.instead':'· замість {m} (вона була недоступна)','m.copy':'Копіювати','m.copied':'Скопійовано','m.preview':'Відкрити','m.err.net':'Немає зв’язку з ІІ-сервером. Перевірте інтернет і спробуйте ще раз.','m.err.key':'ІІ-сервер відхилив запит (ключ доступу).','m.err.model':'Ця модель зараз недоступна — оберіть іншу.','m.err.rate':'Забагато запитів — зачекайте трохи й повторіть.','m.err.up':'Постачальник цієї моделі зараз недоступний ({e}). Спробуйте за хвилину або оберіть іншу модель.','m.err.other':'Щось пішло не так: {e}','m.stopped':'Зупинено','e.name':'Введіть ім’я','e.email':'Введіть коректну пошту','e.pass':'Пароль — щонайменше 6 символів','e.exists':'Ця пошта вже зареєстрована — увійдіть','e.noacc':'Акаунта з такою поштою поки немає','e.wrong':'Невірний пароль',
  'toast.google':'Вхід через Google запрацює після підключення сервера','toast.forgot':'Відновлення пароля запрацює після підключення сервера','toast.welcome':'Ласкаво просимо, {name}!','toast.out':'Ви вийшли з акаунта','toast.saved':'Збережено','toast.deleted':'Акаунт видалено','toast.soon':'Незабаром',
  'nav.home':'Головна','nav.chat':'Чат','nav.projects':'Проєкти','nav.profile':'Профіль','nav.menu':'Меню',
  'greet.morning':'Доброго ранку','greet.day':'Добрий день','greet.evening':'Добрий вечір','greet.night':'Доброї ночі',
@@ -1453,7 +1576,7 @@ uk:{
  'chat.new':'Нова розмова','chat.history':'Історія','chat.emptyT':'Почніть розмову','chat.emptyS':'Поставте запитання, обговоріть ідею або вставте текст — Mundora підхопить.','chat.ph':'Повідомлення для Mundora…',
  'chat.noModel':'Модель поки не підключена. Щойно моделі з’являться, вони будуть у списку вибору — і я відповім просто тут.',
  'models.title':'Модель','models.search':'Назва або ID','models.emptyT':'Моделі вже в дорозі','models.emptyS':'Ми підключаємо перші моделі — незабаром вони з’являться тут.',
- 'chat.toBottom':'До останнього повідомлення','chat.editing':'Редагування повідомлення','chat.copy':'Копіювати','chat.edit':'Змінити','chat.regen':'Відповісти знову','hist.today':'Сьогодні','hist.earlier':'Раніше','hist.del':'Видалити','v.nomail':'На сервері ще не налаштовано надсилання кодів (BREVO_API_KEY і MAIL_FROM у Vercel).','v.nostore':'На сервері ще не підключено базу (Upstash у Vercel → Storage).','v.server':'Помилка сервера: {e}','v.k':'Майже готово','v.t':'Перевірте пошту','v.lead':'Ми надіслали 6-значний код на {email}. Введіть його нижче, щоб підтвердити акаунт.','v.btn':'Підтвердити','v.resend':'Надіслати код ще раз','v.resendIn':'Надіслати знову через {t}','v.bad':'Невірний код. Залишилось спроб: {n}','v.short':'Введіть усі 6 цифр','v.expired':'Код застарів — надішліть новий','v.attempts':'Забагато спроб — надішліть новий код','v.hour':'Забагато кодів — спробуйте за годину','v.mailfail':'Не вдалося надіслати лист. Спробуйте трохи пізніше.','v.sent':'Новий код надіслано','v.spam':'Листа немає? Зачекайте хвилину й загляньте в «Спам», «Промоакції» або «Оповіщення» — інколи він потрапляє туди.','v.wrong':'Не та пошта?','v.out':'Вийти','m.err.verify':'Підтвердіть пошту, щоб почати спілкування.','hist.emptyT':'Поки немає розмов','hist.emptyS':'Тут зберігатимуться ваші чати, щоб до них можна було повернутися.',
+ 'chat.toBottom':'До останнього повідомлення','chat.editing':'Редагування повідомлення','chat.copy':'Копіювати','chat.edit':'Змінити','chat.regen':'Відповісти знову','hist.today':'Сьогодні','hist.earlier':'Раніше','hist.del':'Видалити','v.nomail':'На сервері ще не налаштовано надсилання кодів (BREVO_API_KEY і MAIL_FROM у Vercel).','v.nostore':'На сервері ще не підключено базу (Upstash у Vercel → Storage).','v.server':'Помилка сервера: {e}','v.k':'Майже готово','v.t':'Перевірте пошту','v.lead':'Ми надіслали 6-значний код на {email}. Введіть його нижче, щоб підтвердити акаунт.','v.btn':'Підтвердити','v.resend':'Надіслати код ще раз','v.resendIn':'Надіслати знову через {t}','v.bad':'Невірний код. Залишилось спроб: {n}','v.short':'Введіть усі 6 цифр','v.expired':'Код застарів — надішліть новий','v.attempts':'Забагато спроб — надішліть новий код','v.hour':'Забагато кодів — спробуйте за годину','v.mailfail':'Не вдалося надіслати лист. Спробуйте трохи пізніше.','v.sent':'Новий код надіслано','v.spam':'Листа немає? Зачекайте хвилину й загляньте в «Спам», «Промоакції» або «Оповіщення» — інколи він потрапляє туди.','v.wrong':'Не та пошта?','v.out':'Вийти','m.err.verify':'Підтвердіть пошту, щоб почати спілкування.','adm.k':'Адмін-панель','adm.t':'Керування','adm.users':'Користувачі','adm.promos':'Промокоды','adm.sale':'Акція','adm.count':'Акаунтів: {n}','adm.find':'Знайти за поштою','adm.findBtn':'Знайти','adm.nouser':'Акаунта з такою поштою ще немає — людина має хоча б раз увійти на сайт.','adm.plan':'Тариф','adm.forever':'назавжди','adm.until':'до {d}','adm.days':'днів (0 = назавжди)','adm.give':'Видати тариф','adm.take':'Забрати підписку','adm.tokens':'Бонусні токени','adm.add':'Нарахувати','adm.tokHint':'число з мінусом забирає токени','adm.disc':'Особиста знижка','adm.discBtn':'Дати знижку','adm.pct':'%','adm.status':'Акаунт','adm.active':'Активний','adm.frozen':'Заморожений','adm.deleted':'Видалений','adm.reason':'Причина (необов’язково)','adm.freeze':'Заморозити','adm.delete':'Видалити (бан)','adm.restore':'Розбанити / відновити','adm.reset':'Скинути ліміти','adm.used':'Витрачено: 5 год — {w}, місяць — {m}','adm.bonus':'Бонуси: {n}','adm.seen':'Останній візит: {d}','adm.saved':'Збережено','adm.confirmDel':'Видалити (забанити) цей акаунт?','adm.code':'Код','adm.gen':'Придумати','adm.type':'Що дає','adm.tTokens':'Бонусні токени','adm.tPlan':'Тариф на N днів','adm.tDisc':'Знижку на тарифи','adm.value':'Скільки','adm.valTok':'токенів','adm.valPct':'відсотків','adm.forPlan':'Тариф','adm.forPlans':'На тарифи','adm.all':'Усі тарифи','adm.pdays':'Днів','adm.max':'Скільки разів можна використати (0 = без обмежень)','adm.exp':'Діє до (порожньо = безстроково)','adm.note':'Нотатка для себе','adm.create':'Створити код','adm.none':'Кодів поки немає','adm.uses':'використано {u}{m}','adm.expd':'до {d}','adm.del':'Видалити','adm.saleHint':'Акція знижує ціни тарифів для всіх і показує плашку на сайті.','adm.salePct':'Знижка, %','adm.saleUntil':'Закінчиться (порожньо = поки не вимкнете)','adm.saleText':'Текст плашки ({l})','adm.saleSave':'Запустити / оновити акцію','adm.saleOff':'Вимкнути акцію','adm.saleOn':'Акція триває: −{p}%','adm.saleNone':'Зараз акції немає','set.admin':'Адмін-панель','blk.frozen':'Акаунт заморожено','blk.deleted':'Акаунт видалено','blk.fs':'заморожено','blk.ds':'видалено','blk.text':'Ваш акаунт «{name}» {state}. Якщо ви вважаєте, що це помилка, напишіть у підтримку:','blk.reason':'Причина: {r}','blk.mail':'Написати в підтримку','blk.copy':'Скопіювати адресу','blk.copied':'Адресу скопійовано','blk.out':'Вийти','sale.def':'Акція: −{p}% на тарифи','sale.until':'до {d}','promo.disc':'Готово! −{p}% на тарифи на {days} дн.','promo.nostore':'Промокоди запрацюють після підключення бази (Upstash у Vercel → Storage)','promo.out':'Цей код уже закінчився','promo.expired':'Термін дії коду минув','disc.badge':'−{p}%','hist.emptyT':'Поки немає розмов','hist.emptyS':'Тут зберігатимуться ваші чати, щоб до них можна було повернутися.',
  'proj.kicker':'Усього проєктів','proj.title':'Проєкти','proj.lead':'Кожна генерація і кожна правка зберігаються окремою версією — повернутися можна завжди.','proj.newSite':'Новий сайт','proj.slides':'Презентація',
  'proj.tabs':['Усі','Сайти','Код','Презентації','Ігри'],'proj.search':'Пошук за назвою чи описом','proj.count':'Проєктів:','proj.sort':'Спершу оновлені',
  'proj.emptyT':'Тут з’явиться ваш перший проєкт','proj.emptyS':'Створіть сайт, презентацію, програму або гру. Усі збережені версії залишаться тут.','proj.emptyBtn':'Створити проєкт',
@@ -1521,9 +1644,10 @@ function fmtTokens(n){
   if (n >= 1e3) { const v = Math.round(n/1e3); return v.toLocaleString(t('locale')) + t('unit.k'); }
   return n.toLocaleString(t('locale'));
 }
-function fmtPrice(id){
-  const v = PRICES[id][state.currency];
+function fmtPrice(id){ return fmtAmount(PRICES[id][state.currency]); }
+function fmtAmount(v){
   if (!v) return t('free');
+  if (state.currency === 'usd') v = Math.round(v * 100) / 100; else v = Math.round(v);
   if (state.currency === 'usd') return '$' + v.toFixed(2).replace(/\.00$/,'');
   if (state.currency === 'rub') return v.toLocaleString('ru-RU').replace(/ /g,' ') + ' ₽';
   return v.toLocaleString('uk-UA').replace(/ /g,' ') + ' ₴';
@@ -1605,12 +1729,13 @@ function renderPlans(){
     const name = p.id[0].toUpperCase() + p.id.slice(1);
     const cur = USER.plan === p.id;
     const ribbon = cur ? `<span class="ribbon cur">${esc(t('current'))}</span>` : p.featured ? `<span class="ribbon">${esc(t('popular'))}</span>` : '';
-    const price = fmtPrice(p.id);
+    const pc = discountFor(p.id);
+    const price = pc ? fmtAmount(PRICES[p.id][state.currency] * (1 - pc / 100)) : fmtPrice(p.id);
     return `<article class="plan ${p.featured?'featured':''} ${cur?'current':''}" style="--glow:${p.glow}">
       <div class="rib-row">${ribbon}</div>
       <div class="plan-top">${A['plan-'+p.id] ? `<img class="gem" src="${A['plan-'+p.id]}" alt="" decoding="async">` : `<svg class="gem" viewBox="0 0 72 72" aria-hidden="true"><use href="#${p.gem}"/></svg>`}
       <div><h4>${name}</h4><div class="tagline">${esc(t('plan.'+p.id+'.tag'))}</div></div></div>
-      <div class="price"><b>${esc(price)}</b>${PRICES[p.id].rub ? `<small>${esc(t('per'))}</small>` : ''}</div>
+      <div class="price"><b>${esc(price)}</b>${pc ? `<s>${esc(fmtPrice(p.id))}</s><span class="disc">${esc(t('disc.badge', { p: pc }))}</span>` : ''}${PRICES[p.id].rub && !pc ? `<small>${esc(t('per'))}</small>` : ''}</div>
       <ul class="feats">${t('plan.'+p.id+'.f').map(f => `<li><svg viewBox="0 0 20 20"><use href="#ic-check"/></svg><span>${esc(f)}</span></li>`).join('')}</ul>
       ${cur ? `<button class="btn btn-ghost btn-block" disabled style="opacity:.6;cursor:default">${esc(t('current'))}</button>`
             : `<button class="btn ${p.featured?'btn-grad':'btn-primary'} btn-block" data-toast="toast.plan">${esc(t('choose',{name}))}</button>`}
@@ -1650,7 +1775,7 @@ function applyI18n(){
   $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   $('#homeInput').placeholder = t('ph.'+state.mode);
-  renderGreeting(); renderSuggest(); renderCreate(); renderWelcome(); if ($('.page.active[data-page="auth"]')) renderAuth(); renderSigninBtn(); renderProjTabs(); renderUsage(); renderPlans(); renderBonuses(); renderLangUI(); renderModelChip(); renderModelList(); renderMsgs();
+  renderGreeting(); renderSuggest(); renderCreate(); renderWelcome(); if ($('.page.active[data-page="auth"]')) renderAuth(); renderSigninBtn(); renderProjTabs(); renderUsage(); renderPlans(); renderBonuses(); renderLangUI(); renderModelChip(); if (typeof renderSale === 'function' && USER.sale !== undefined) renderSale(); if (USER.blocked) setBlocked(USER.blocked); if (route.page === 'admin') adminOpen(); renderModelList(); renderMsgs();
   setSeg($('#langSeg'), 'data-lang', state.lang);
   if (route.page === 'section') renderSection(route.sub);
   requestAnimationFrame(() => allSegs().forEach(placeThumb));
@@ -1702,7 +1827,7 @@ function closeSheet(s){
 }
 
 /* ---------- router (works without changing the URL, so in-app previews can't block it) ---------- */
-const PAGES = ['home','chat','projects','profile','section','welcome','login','register','verify'];
+const PAGES = ['home','chat','projects','profile','section','welcome','login','register','verify','admin'];
 const GUEST = ['welcome','login','register'];
 const route = { page:'home', sub:'' };
 let curHash = location.hash || '';
@@ -1726,6 +1851,7 @@ function show(){
   if (state.user && GUEST.includes(route.page)) return go(state.needVerify ? '#/verify' : '#/home', true);
   if (state.user && state.needVerify && route.page !== 'verify') return go('#/verify', true);
   if (route.page === 'verify' && (!state.user || !state.needVerify)) return go(state.user ? '#/home' : '#/welcome', true);
+  if (route.page === 'admin' && !(state.user && USER.admin)) return go('#/home', true);
   const el = route.page === 'login' || route.page === 'register' ? 'auth' : route.page;
   $$('.page').forEach(p => p.classList.toggle('active', p.dataset.page === el));
   document.body.dataset.page = route.page;
@@ -1741,6 +1867,7 @@ function show(){
   if (route.page === 'section') renderSection(route.sub);
   if (el === 'auth') renderAuth();
   if (el === 'verify') renderVerify();
+  if (el === 'admin') adminOpen();
   renderSigninBtn();
   closeSheet();
   window.scrollTo(0, 0);
@@ -1908,6 +2035,7 @@ async function resetPassword(){
 }
 async function signOutNow(){
   state.needVerify = false; store.del('nv'); state.codeSent = 0; store.del('prefsAt');
+  USER.admin = false; store.del('adm'); USER.sale = USER.disc = null; setBlocked(null); $('#setAdminRow').hidden = true; AD.card = null;
   try { if (await fbOk()) await FB.m.signOut(FB.auth); } catch(e){}
   setUser(null); go('#/welcome', true);
 }
@@ -1967,11 +2095,12 @@ const AI = (() => {
     return arr.map(m => typeof m === 'string' ? m : (m && (m.id || m.name))).filter(Boolean);
   }
   async function get(p){ const r = await fetch(url(p), { headers: await hdr(), cache: 'no-store' }); if (!r.ok) await fail(r); return r.json(); }
-  async function usage(){ const r = await fetch(url('usage'), { headers: await hdr(), cache: 'no-store' }); if (!r.ok) await fail(r); return r.json(); }
+  async function usage(){ const r = await fetch(url('usage') + '&n=' + encodeURIComponent(USER.name || ''), { headers: await hdr(), cache: 'no-store' }); if (!r.ok) await fail(r); return r.json(); }
   async function post(p, body){ const r = await fetch(url(p), { method: 'POST', headers: await hdr(), body: JSON.stringify(body) }); if (!r.ok) await fail(r); return r.json(); }
-  async function chat(model, messages, onDelta, signal, noStream, extra){
+  async function chat(model, messages, onDelta, signal, noStream, extra, onModel){
     const r = await fetch(url('chat'), { method: 'POST', headers: await hdr(), body: JSON.stringify(Object.assign({ model, messages, stream: !noStream }, extra || {})), signal });
     if (!r.ok) await fail(r);
+    const um = r.headers.get('x-model'); if (um && onModel) onModel(um);
     const ct = r.headers.get('content-type') || '';
     if (!r.body || !/event-stream/.test(ct)){
       const j = await r.json(); const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
@@ -2027,14 +2156,23 @@ function pickModels(ids){
 }
 const MODELS = { list: null, failed: false, loading: null, err: '' };
 const errText = e => !e ? '' : (e.status ? 'HTTP ' + e.status + (e.message ? ': ' + e.message : '') : (e.message || String(e)));
+// The model list is kept in this browser, so it shows instantly; a fresh copy is fetched quietly in the background.
+(() => {
+  try {
+    const c = JSON.parse(store.get('models', 'null'));
+    if (c && Array.isArray(c.ids) && c.ids.length){ const l = pickModels(c.ids); if (l.length){ MODELS.list = l; MODELS.cachedAt = c.at || 0; } }
+  } catch(e){}
+  if (!MODELS.list) MODELS.list = pickModels(FALLBACK_MODELS), MODELS.cachedAt = 0;
+})();
 function loadModels(force){
-  if (MODELS.list && !force) return Promise.resolve(MODELS.list);
   if (MODELS.loading) return MODELS.loading;
+  if (!force && MODELS.fresh) return Promise.resolve(MODELS.list);
   MODELS.loading = AI.models().then(ids => {
-    const l = pickModels(ids); MODELS.failed = !l.length; MODELS.list = l.length ? l : pickModels(FALLBACK_MODELS);
-  }).catch(e => { MODELS.failed = true; MODELS.err = errText(e); MODELS.list = pickModels(FALLBACK_MODELS); })
+    const l = pickModels(ids);
+    if (l.length){ MODELS.list = l; MODELS.failed = false; MODELS.err = ''; MODELS.fresh = true; store.set('models', JSON.stringify({ at: Date.now(), ids: l.map(m => m.id) })); }
+    else if (!MODELS.cachedAt){ MODELS.failed = true; MODELS.err = ''; }
+  }).catch(e => { if (!MODELS.cachedAt){ MODELS.failed = true; MODELS.err = errText(e); } })
     .then(() => { MODELS.loading = null; ensureModel(); renderModelList(); renderModelChip(); return MODELS.list; });
-  renderModelList();
   return MODELS.loading;
 }
 function curModel(){
@@ -2059,10 +2197,10 @@ function renderModelChip(){
 function renderModelList(){
   const box = $('#modelList'); if (!box) return;
   const q = ($('#modelSearch').value || '').trim().toLowerCase();
-  if (!MODELS.list){ box.innerHTML = `<div class="mstat"><div class="mspin"></div>${esc(t('m.loading'))}</div>`; return; }
+  if (!MODELS.list || !MODELS.list.length){ box.innerHTML = `<div class="mstat"><div class="mspin"></div>${esc(t('m.loading'))}</div>`; return; }
   const l = MODELS.list.filter(m => !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
   const ck = '<span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>';
-  let h = MODELS.failed ? `<div class="mstat">${esc(t('m.fail'))}${MODELS.err ? `<br><small style="opacity:.75">${esc(MODELS.err)}</small><br>` : ''}<button type="button" id="modelRetry">${esc(t('m.retry'))}</button></div>` : '';
+  let h = MODELS.failed ? `<div class="mstat">${esc(t('m.fail'))}<button type="button" id="modelRetry">${esc(t('m.retry'))}</button></div>` : '';
   [['claude', 'Claude', t('m.anth')], ['gpt', 'ChatGPT', t('m.oai')]].forEach(([fam, title, org]) => {
     const g = l.filter(m => m.fam === fam); if (!g.length) return;
     h += `<div class="mgroup">${esc(title)}</div>` + g.map(m => `<button type="button" class="mi${m.id === state.model ? ' sel' : ''}" data-model="${esc(m.id)}"><span class="mlogo">${logoSvg(fam)}</span><span class="mt"><b>${esc(m.name)}</b><small>${esc(org)}</small></span>${ck}</button>`).join('');
@@ -2239,6 +2377,160 @@ async function pullPrefs(){
 function syncAll(){ if (!state.user) return; pullPrefs(); syncConvs(); refreshUsage(0); }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncAll(); });
 
+/* ---------- sales and discounts ---------- */
+const SUPPORT = 'mundoraaiapp@gmail.com';
+const inPlans = (sel, id) => !sel || sel === 'all' || sel === id || (Array.isArray(sel) && sel.includes(id));
+function discountFor(id){
+  if (!PRICES[id] || !PRICES[id][state.currency]) return 0;
+  let pc = 0;
+  if (USER.sale && inPlans(USER.sale.plans, id)) pc = Math.max(pc, +USER.sale.percent || 0);
+  if (USER.disc && inPlans(USER.disc.plans, id)) pc = Math.max(pc, +USER.disc.percent || 0);
+  return Math.min(90, pc);
+}
+function renderSale(){
+  const s = USER.sale, d = USER.disc;
+  let txt = '';
+  if (s){ txt = (s.text && s.text[state.lang]) || t('sale.def', { p: s.percent }); if (s.until) txt += ' · ' + t('sale.until', { d: fmtWhen(s.until, true) }); }
+  else if (d){ txt = t('sale.def', { p: d.percent }); if (d.until) txt += ' · ' + t('sale.until', { d: fmtWhen(d.until, true) }); }
+  ['#homeSale', '#plansSale'].forEach(id => { const el = $(id); if (!el) return; el.hidden = !txt; el.textContent = txt ? '✦ ' + txt : ''; });
+  renderPlans();
+}
+
+/* ---------- frozen / deleted account screen ---------- */
+function setBlocked(b){
+  USER.blocked = b;
+  const box = $('#blocked');
+  document.body.classList.toggle('is-blocked', !!b);
+  if (!b){ box.hidden = true; return; }
+  const del = b.s === 'deleted';
+  $('#blkArt').src = MAIL_ART;
+  $('#blkTitle').textContent = t(del ? 'blk.deleted' : 'blk.frozen');
+  $('#blkText').textContent = t('blk.text', { name: USER.name || USER.email, state: t(del ? 'blk.ds' : 'blk.fs') });
+  $('#blkReason').textContent = b.reason ? t('blk.reason', { r: b.reason }) : '';
+  const mail = USER.support || SUPPORT, href = 'mailto:' + mail + '?subject=' + encodeURIComponent('Mundora: ' + (USER.email || ''));
+  $('#blkAddr').textContent = mail; $('#blkAddr').href = href; $('#blkMail').href = href;
+  box.hidden = false;
+}
+
+/* ---------- admin panel ---------- */
+const AD = { tab: 'users', card: null };
+const dayEnd = v => { if (!v) return 0; const d = new Date(v + 'T23:59:59'); return isNaN(d) ? 0 : d.getTime(); };
+const toDateInput = ts => { if (!ts) return ''; const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function admMsg(id, key, vars, kind){ const e = $(id); e.textContent = key ? (key.startsWith('!') ? key.slice(1) : t(key, vars)) : ''; e.className = 'adm-msg' + (kind ? ' ' + kind : ''); }
+function adminTab(tab){
+  AD.tab = tab;
+  $$('.apane').forEach(p => p.classList.toggle('on', p.dataset.apane === tab));
+  setSeg($('#admSeg'), 'data-atab', tab);
+  if (tab === 'promos') adminPromos();
+  if (tab === 'sale') adminSale();
+}
+function adminOpen(){
+  ['ru', 'en', 'uk'].forEach(l => { $('#slT' + cap(l)).textContent = t('adm.saleText', { l: l.toUpperCase() }); });
+  pcTypeUI();
+  adminTab(AD.tab);
+  AI.get('admin-stats').then(r => { $('#admCount').textContent = t('adm.count', { n: r.users }); }).catch(() => {});
+  if (AD.card) renderAdminUser(AD.card);
+}
+async function adminFind(){
+  const q = $('#admQ').value.trim(); if (!q) return;
+  admMsg('#admMsg', ''); $('#admUser').innerHTML = '';
+  try { AD.card = await AI.get('admin-find&q=' + encodeURIComponent(q)); renderAdminUser(AD.card); }
+  catch(e){ admMsg('#admMsg', e && e.code === 'nouser' ? 'adm.nouser' : '!' + errText(e), null, 'bad'); }
+}
+function renderAdminUser(c){
+  if (!c) return;
+  const st = c.status && c.status.s, pi = c.planInfo;
+  const planTxt = cap(c.plan) + (c.plan !== 'spark' ? ' · ' + (pi && pi.until ? t('adm.until', { d: fmtWhen(pi.until, true) }) : t('adm.forever')) : '');
+  const opt = v => `<option value="${v}"${c.plan === v ? ' selected' : ''}>${cap(v)}</option>`;
+  $('#admUser').innerHTML = `<div class="card adm-card">
+    <div class="u-top"><div class="u-ava">${esc(((c.name || c.email || '?').trim()[0] || '?').toUpperCase())}</div><div><b>${esc(c.name || '—')}</b><small>${esc(c.email || '')}</small></div></div>
+    <div class="u-badges"><span class="u-b acc">${esc(planTxt)}</span><span class="u-b ${st ? 'bad' : 'ok'}">${esc(t(st === 'deleted' ? 'adm.deleted' : st === 'frozen' ? 'adm.frozen' : 'adm.active'))}</span>${c.disc && c.disc.percent ? `<span class="u-b">−${c.disc.percent}%</span>` : ''}</div>
+    <div class="u-meta">${esc(t('adm.used', { w: fmtTokens(c.w.used) + (c.w.total ? ' / ' + fmtTokens(c.w.total) : ''), m: fmtTokens(c.m.used) + ' / ' + fmtTokens(c.m.total) }))}<br>${esc(t('adm.bonus', { n: fmtTokens(c.bonus || 0) }))}${c.seen ? '<br>' + esc(t('adm.seen', { d: fmtWhen(c.seen, true) })) : ''}${st && c.status.reason ? '<br>' + esc(t('blk.reason', { r: c.status.reason })) : ''}</div>
+    <div class="u-sec"><h4>${esc(t('adm.plan'))}</h4>
+      <div class="adm-grid" style="margin:0"><select class="tf" id="auPlan">${['orbit', 'nova', 'cosmos'].map(opt).join('')}</select><input class="tf" id="auDays" type="number" inputmode="numeric" min="0" value="30" title="${esc(t('adm.days'))}"></div>
+      <small class="u-meta">${esc(t('adm.days'))}</small>
+      <div class="u-actions"><button type="button" class="btn btn-primary" data-ua="plan">${esc(t('adm.give'))}</button><button type="button" class="btn btn-ghost" data-ua="take">${esc(t('adm.take'))}</button></div></div>
+    <div class="u-sec"><h4>${esc(t('adm.tokens'))}</h4>
+      <div class="adm-row"><input class="tf" id="auTok" type="number" inputmode="numeric" placeholder="1000000"><button type="button" class="btn btn-primary" data-ua="tokens">${esc(t('adm.add'))}</button></div>
+      <small class="u-meta">${esc(t('adm.tokHint'))}</small></div>
+    <div class="u-sec"><h4>${esc(t('adm.disc'))}</h4>
+      <div class="adm-grid" style="margin:0"><input class="tf" id="auPct" type="number" inputmode="numeric" min="0" max="90" placeholder="%"><input class="tf" id="auDiscDays" type="number" inputmode="numeric" min="1" value="30"></div>
+      <div class="u-actions"><button type="button" class="btn btn-ghost" data-ua="disc">${esc(t('adm.discBtn'))}</button></div></div>
+    <div class="u-sec"><h4>${esc(t('adm.status'))}</h4>
+      <input class="tf" id="auReason" maxlength="200" placeholder="${esc(t('adm.reason'))}">
+      <div class="u-actions">${st ? `<button type="button" class="btn btn-primary" data-ua="restore">${esc(t('adm.restore'))}</button>` : `<button type="button" class="btn btn-ghost" data-ua="freeze">${esc(t('adm.freeze'))}</button><button type="button" class="btn btn-danger" data-ua="delete">${esc(t('adm.delete'))}</button>`}<button type="button" class="btn btn-ghost" data-ua="reset">${esc(t('adm.reset'))}</button></div>
+      <p class="adm-msg" id="auMsg"></p></div>
+  </div>`;
+}
+async function adminAct(kind){
+  const c = AD.card; if (!c) return;
+  const body = { uid: c.uid };
+  if (kind === 'plan'){ body.action = 'plan'; body.plan = $('#auPlan').value; body.days = +$('#auDays').value || 0; }
+  else if (kind === 'take'){ body.action = 'plan'; body.plan = 'spark'; }
+  else if (kind === 'tokens'){ body.action = 'tokens'; body.n = +$('#auTok').value || 0; if (!body.n) return; }
+  else if (kind === 'disc'){ body.action = 'disc'; body.percent = +$('#auPct').value || 0; body.days = +$('#auDiscDays').value || 30; }
+  else if (kind === 'delete'){ if (!confirm(t('adm.confirmDel'))) return; body.action = 'delete'; body.reason = $('#auReason').value.trim(); }
+  else { body.action = kind; body.reason = $('#auReason').value.trim(); }
+  try { AD.card = await AI.post('admin-act', body); renderAdminUser(AD.card); admMsg('#auMsg', 'adm.saved', null, 'ok'); if (c.uid === (FB.auth && FB.auth.currentUser && FB.auth.currentUser.uid)) refreshUsage(0); }
+  catch(e){ admMsg('#auMsg', '!' + errText(e), null, 'bad'); }
+}
+function pcTypeUI(){
+  const ty = $('#pcType').value;
+  $('#pcValW').style.display = ty === 'plan' ? 'none' : '';
+  $('#pcValL').textContent = t('adm.value') + ', ' + t(ty === 'discount' ? 'adm.valPct' : 'adm.valTok');
+  $('#pcPlanW').style.display = ty === 'plan' ? '' : 'none';
+  $('#pcPlansW').style.display = ty === 'discount' ? '' : 'none';
+  $('#pcDaysW').style.display = ty === 'tokens' ? 'none' : '';
+}
+async function adminPromos(){
+  try {
+    const r = await AI.get('admin-promos');
+    const list = r.list || [];
+    $('#pcList').innerHTML = list.length ? list.map(x => {
+      const what = x.type === 'plan' ? cap(x.plan) + ' · ' + x.days + ' ' + t('adm.pdays').toLowerCase() : x.type === 'discount' ? '−' + x.value + '% · ' + (x.plans === 'all' ? t('adm.all') : cap(x.plans)) + ' · ' + x.days + ' ' + t('adm.pdays').toLowerCase() : '+' + fmtTokens(x.value) + ' ' + t('adm.valTok');
+      const uses = t('adm.uses', { u: x.uses || 0, m: x.maxUses ? ' / ' + x.maxUses : '' });
+      return `<div class="card pc-item"><div class="pc-txt"><div class="pc-c">${esc(x.code)}</div><small>${esc(what)} · ${esc(uses)}${x.expires ? ' · ' + esc(t('adm.expd', { d: fmtWhen(x.expires, true) })) : ''}${x.note ? ' · ' + esc(x.note) : ''}</small></div>
+        <button type="button" data-pccopy="${esc(x.code)}" aria-label="Copy">${IC.copy}</button><button type="button" data-pcdel="${esc(x.code)}" aria-label="${esc(t('adm.del'))}">${IC.del}</button></div>`;
+    }).join('') : `<p class="adm-hint" style="text-align:center">${esc(t('adm.none'))}</p>`;
+  } catch(e){ $('#pcList').innerHTML = `<p class="adm-msg bad">${esc(errText(e))}</p>`; }
+}
+async function adminCreatePromo(){
+  const ty = $('#pcType').value;
+  const body = { code: $('#pcCode').value.trim(), type: ty, value: +$('#pcVal').value || 0, plan: $('#pcPlan').value, plans: $('#pcPlans').value, days: +$('#pcDays').value || 30, maxUses: +$('#pcMax').value || 0, expires: dayEnd($('#pcExp').value), note: $('#pcNote').value.trim() };
+  if (ty !== 'plan' && !body.value) return admMsg('#pcMsg', '!' + t('adm.value') + '?', null, 'bad');
+  try { const r = await AI.post('admin-promo', body); admMsg('#pcMsg', '!' + t('adm.saved') + ': ' + r.code, null, 'ok'); $('#pcCode').value = ''; $('#pcNote').value = ''; adminPromos(); }
+  catch(e){ admMsg('#pcMsg', '!' + errText(e), null, 'bad'); }
+}
+async function adminSale(){
+  try {
+    const r = await AI.get('admin-sale'), s = r.sale;
+    $('#saleState').textContent = s ? t('adm.saleOn', { p: s.percent }) + (s.until ? ' · ' + t('sale.until', { d: fmtWhen(s.until, true) }) : '') : t('adm.saleNone');
+    if (s){ $('#slPct').value = s.percent; $('#slPlans').value = s.plans || 'all'; $('#slUntil').value = toDateInput(s.until); $('#slTextRu').value = (s.text && s.text.ru) || ''; $('#slTextEn').value = (s.text && s.text.en) || ''; $('#slTextUk').value = (s.text && s.text.uk) || ''; }
+  } catch(e){ admMsg('#slMsg', '!' + errText(e), null, 'bad'); }
+}
+async function adminSaveSale(off){
+  const body = off ? { percent: 0 } : { percent: +$('#slPct').value || 0, plans: $('#slPlans').value, until: dayEnd($('#slUntil').value), text_ru: $('#slTextRu').value.trim(), text_en: $('#slTextEn').value.trim(), text_uk: $('#slTextUk').value.trim() };
+  try { await AI.post('admin-sale', body); admMsg('#slMsg', 'adm.saved', null, 'ok'); adminSale(); refreshUsage(0); }
+  catch(e){ admMsg('#slMsg', '!' + errText(e), null, 'bad'); }
+}
+function bindAdmin(){
+  $('#admSeg').addEventListener('click', e => { const b = e.target.closest('[data-atab]'); if (b) adminTab(b.dataset.atab); });
+  $('#admFind').addEventListener('click', adminFind);
+  $('#admQ').addEventListener('keydown', e => { if (e.key === 'Enter') adminFind(); });
+  $('#admUser').addEventListener('click', e => { const b = e.target.closest('[data-ua]'); if (b) adminAct(b.dataset.ua); });
+  $('#pcType').addEventListener('change', pcTypeUI);
+  $('#pcGen').addEventListener('click', () => { const A2 = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = 'MUNDO-'; const r = crypto.getRandomValues(new Uint8Array(6)); r.forEach(x => { c += A2[x % A2.length]; }); $('#pcCode').value = c; });
+  $('#pcCreate').addEventListener('click', adminCreatePromo);
+  $('#pcList').addEventListener('click', async e => {
+    const d = e.target.closest('[data-pcdel]'); if (d){ try { await AI.post('admin-promo-del', { code: d.dataset.pcdel }); adminPromos(); } catch(err){} return; }
+    const c = e.target.closest('[data-pccopy]'); if (c) copyText(c.dataset.pccopy, c);
+  });
+  $('#slSave').addEventListener('click', () => adminSaveSale(false));
+  $('#slOff').addEventListener('click', () => adminSaveSale(true));
+  $('#blkCopy').addEventListener('click', () => copyRaw(USER.support || SUPPORT, () => toast(t('blk.copied'))));
+  $('#blkOut').addEventListener('click', signOutNow);
+}
+
 /* ---------- account data from the server: limits, plan, invites ---------- */
 let usageTimer = 0;
 function refreshUsage(delay){
@@ -2252,6 +2544,11 @@ function refreshUsage(delay){
       USER.month = { used: u.m.used, total: u.m.total, resetAt: u.m.resetAt };
       USER.builds = u.builds || 0; USER.invites = u.invites || 0; USER.bonus = u.bonus || 0;
       if (u.refCode) USER.refCode = u.refCode;
+      USER.admin = !!u.admin; USER.sale = u.sale || null; USER.disc = u.disc || null; USER.support = u.support || SUPPORT;
+      if (USER.admin) store.set('adm', USER.email); else store.del('adm');
+      $('#setAdminRow').hidden = !USER.admin;
+      setBlocked(u.blocked || null);
+      renderSale();
       if (typeof u.needVerify === 'boolean') setNeedVerify(u.needVerify);
       renderUsage(); renderPlans(); renderBonuses();
       const sp = $('#setPlan'); if (sp) sp.textContent = cap(USER.plan) + ' →';
@@ -2318,10 +2615,14 @@ function msgEl(m, anim){
     const info = m.model ? parseModel(m.model) : null;
     el = document.createElement('div'); el.dataset.i = i;
     el.className = 'msg bot' + (m.errKey ? ' err' : '') + (m.typing ? ' busy' : '');
-    el.innerHTML = `<div class="who">${info ? logoSvg(info.fam) : '<svg viewBox="0 0 32 32"><use href="#ic-mark"/></svg>'}${esc(info ? info.name : 'Mundora')}</div><div class="body">${msgBody(m)}</div><div class="acts">${actBtn('copy','copy','chat.copy')}${actBtn('regen','regen','chat.regen')}</div>`;
+    el.innerHTML = `${whoHTML(m)}<div class="body">${msgBody(m)}</div><div class="acts">${actBtn('copy','copy','chat.copy')}${actBtn('regen','regen','chat.regen')}</div>`;
   }
   if (!anim) el.style.animation = 'none';
   m.el = el; return el;
+}
+function whoHTML(m){
+  const info = m.model ? parseModel(m.model) : null, asked = m.asked ? parseModel(m.asked) : null;
+  return `<div class="who">${info ? logoSvg(info.fam) : '<svg viewBox="0 0 32 32"><use href="#ic-mark"/></svg>'}${esc(info ? info.name : 'Mundora')}${asked ? `<small class="inst">${esc(t('m.instead', { m: asked.name }))}</small>` : ''}</div>`;
 }
 function renderChatTitle(){
   const c = curConv();
@@ -2347,7 +2648,7 @@ const convKey = () => 'chats:' + (USER.email || 'guest');
 function loadConvs(){ try { return JSON.parse(store.get(convKey(), '[]')) || []; } catch(e){ return []; } }
 function saveConvs(list){ try { store.set(convKey(), JSON.stringify(list.slice(0, 60))); } catch(e){} }
 function curConv(){ return state.chatId ? loadConvs().find(c => c.id === state.chatId) : null; }
-const plainMsg = m => { const o = { role:m.role, text:m.text || '' }; if (m.model) o.model = m.model; if (m.errKey){ o.errKey = m.errKey; o.errDetail = m.errDetail; } if (m.stopped) o.stopped = true; return o; };
+const plainMsg = m => { const o = { role:m.role, text:m.text || '' }; if (m.model) o.model = m.model; if (m.asked) o.asked = m.asked; if (m.errKey){ o.errKey = m.errKey; o.errDetail = m.errDetail; } if (m.stopped) o.stopped = true; return o; };
 function saveCurrent(){
   if (!state.messages.length) return;
   const list = loadConvs();
@@ -2451,6 +2752,7 @@ async function runBot(){
     else {
       const st = err && err.status;
       if (err && err.code === 'limit'){ bot.errKey = err.which === 'w' ? 'm.err.limitW' : 'm.err.limitM'; bot.errDetail = fmtWhen(err.resetAt, err.which === 'm'); }
+      else if (err && err.code === 'blocked'){ bot.errKey = err.status === 'deleted' ? 'blk.deleted' : 'blk.frozen'; refreshUsage(0); }
       else if (err && err.code === 'verify'){ bot.errKey = 'm.err.verify'; setTimeout(() => setNeedVerify(true), 1200); }
       else if (st === 401){ bot.errKey = 'm.err.auth'; }
       else bot.errKey = (st >= 500 || /upstream/i.test((err && err.message) || '')) ? 'm.err.up' : !st ? (err && err.empty ? 'm.err.other' : 'm.err.net') : st === 403 ? 'm.err.key' : (st === 404 || st === 400 && /model/i.test(err.message)) ? 'm.err.model' : st === 429 ? 'm.err.rate' : 'm.err.other';
@@ -2466,10 +2768,26 @@ async function runBot(){
     updToBottom(); refreshUsage(600);
   }
 }
+// Copying works in normal browsers and in in-app browsers (Telegram, Instagram…), where the modern clipboard API is often blocked
+function legacyCopy(txt){
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:0;left:0;width:2px;height:2px;padding:0;border:0;opacity:0;font-size:16px';
+  document.body.appendChild(ta);
+  const sel = document.getSelection(), old = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+  ta.focus({ preventScroll: true }); ta.select(); ta.setSelectionRange(0, txt.length);
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); if (old && sel){ sel.removeAllRanges(); sel.addRange(old); }
+  return ok;
+}
+function copyRaw(txt, done){
+  if (!txt) return;
+  if (legacyCopy(txt)) return done();
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => toast(t('m.copyFail')));
+  else toast(t('m.copyFail'));
+}
 function copyText(txt, btn){
-  const done = () => { if (!btn) return; btn.innerHTML = IC.ok; btn.classList.add('done'); setTimeout(() => { btn.innerHTML = IC.copy; btn.classList.remove('done'); }, 1300); };
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => {});
-  else { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch(err){} ta.remove(); }
+  copyRaw(txt, () => { if (!btn) return; btn.innerHTML = IC.ok; btn.classList.add('done'); setTimeout(() => { btn.innerHTML = IC.copy; btn.classList.remove('done'); }, 1300); });
 }
 function msgAction(act, i, btn){
   const m = state.messages[i]; if (!m) return;
@@ -2636,17 +2954,14 @@ $('#promoBtn').addEventListener('click', async () => {
   try {
     const r = await AI.post('promo', { code: v });
     f.value = '';
-    toast(r.plan ? t('promo.plan', { plan: cap(r.plan), days: r.days }) : t('promo.ok', { n: fmtTokens(r.tokens || 0) }));
+    toast(r.plan ? t('promo.plan', { plan: cap(r.plan), days: r.days }) : r.discount ? t('promo.disc', { p: r.discount, days: r.days }) : t('promo.ok', { n: fmtTokens(r.tokens || 0) }));
     refreshUsage(0);
-  } catch(err){ bad(err && err.code === 'promo_bad' ? 'promo.bad' : err && err.code === 'promo_used' ? 'promo.used' : 'promo.err'); }
+  } catch(err){ const c = err && err.code; bad(c === 'promo_bad' ? 'promo.bad' : c === 'promo_used' ? 'promo.used' : c === 'promo_out' ? 'promo.out' : c === 'promo_expired' ? 'promo.expired' : c === 'nostore' ? 'promo.nostore' : 'promo.err'); }
   finally { btn.disabled = false; }
 });
 $('#promoInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#promoBtn').click(); });
 $('#copyRef').addEventListener('click', async () => {
-  const link = refLink();
-  try { await navigator.clipboard.writeText(link); }
-  catch(err){ const ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e2){} ta.remove(); }
-  toast(t('ref.copied'));
+  copyRaw(refLink(), () => toast(t('ref.copied')));
 });
 // swipe-down to close sheets on touch
 $$('.sheet').forEach(sh => {
@@ -2663,10 +2978,13 @@ bindComposer($('#homeInput'), $('#homeSend'), 80, text => { const mode = state.m
 bindComposer($('#chatInput'), $('#chatSend'), 26, text => sendChat(text, 'chat'));
 try { state.user = JSON.parse(store.get('user', 'null')); } catch(e){ state.user = null; }
 state.needVerify = !!(state.user && store.get('nv', null) === state.user.email);
+USER.admin = !!(state.user && store.get('adm', null) === state.user.email);
 if (state.user){ USER.name = state.user.name; USER.email = state.user.email; }
 $('#authSubmit').addEventListener('click', submitAuth);
 $('#gBtn').addEventListener('click', googleAuth);
 bindOtp();
+bindAdmin();
+$('#setAdminRow').hidden = !USER.admin;
 $('#forgotBtn').addEventListener('click', resetPassword);
 ['#fName','#fEmail','#fPass'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submitAuth(); } }));
 $('#eyeBtn').addEventListener('click', () => { const f = $('#fPass'); f.type = f.type === 'password' ? 'text' : 'password'; });
@@ -2682,7 +3000,7 @@ $('#delAccBtn').addEventListener('click', deleteAccount);
 $('#modelSearch').addEventListener('input', renderModelList);
 $('#speedSeg').addEventListener('click', e => { const b = e.target.closest('[data-speed]'); if (!b) return; state.speed = b.dataset.speed; store.set('speed', state.speed); prefsChanged(); setSeg($('#speedSeg'), 'data-speed', state.speed); });
 $('#modelList').addEventListener('click', e => {
-  if (e.target.closest('#modelRetry')){ MODELS.list = null; loadModels(true); return; }
+  if (e.target.closest('#modelRetry')){ MODELS.failed = false; MODELS.err = ''; renderModelList(); loadModels(true); return; }
   const b = e.target.closest('[data-model]'); if (!b) return;
   state.model = b.dataset.model; store.set('model', state.model); prefsChanged();
   renderModelList(); renderModelChip(); setTimeout(() => closeSheet(), 180);
@@ -2693,9 +3011,7 @@ $('#msgs').addEventListener('click', e => {
   const b = e.target.closest('[data-copy],[data-preview]'); if (!b) return;
   const code = $('code', b.closest('.code')).textContent;
   if ('copy' in b.dataset){
-    const done = () => { b.textContent = t('m.copied'); setTimeout(() => { b.textContent = t('m.copy'); }, 1400); };
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => {});
-    else { const ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch(err){} ta.remove(); }
+    copyRaw(code, () => { b.textContent = t('m.copied'); setTimeout(() => { b.textContent = t('m.copy'); }, 1400); });
   } else {
     const w = window.open(URL.createObjectURL(new Blob([code], { type:'text/html' })), '_blank');
     if (!w) toast(t('e.net'));
