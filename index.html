@@ -2806,14 +2806,12 @@ const AI = (() => {
         if (!line.startsWith('data:')) continue;
         const d = line.slice(5).trim(); if (d === '[DONE]') return;
         let j; try { j = JSON.parse(d); } catch(e){ continue; }
-        if (j.error){ const err = new Error(j.error.message || 'error'); throw err; }
+        if (j.error || j.type === 'error'){ const e = j.error || {}; const err = new Error((typeof e === 'string' ? e : e.message) || 'error'); if (e.status) err.status = e.status; if (e.code) err.code = e.code; throw err; }
         // a very long answer: the server goes on writing it in the next part — follow it there
         if (j.mundora && j.mundora.cont) throw Object.assign(new Error('continues'), { cont: true });
-        const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
-        const rr = dl.reasoning_content || dl.reasoning || dl.thinking;
-        if (onDelta.think && typeof rr === 'string' && rr) onDelta(rr, true);
-        const c = dl.content;
-        if (c) onDelta(typeof c === 'string' ? c : (Array.isArray(c) ? c.map(x => x.text || '').join('') : ''));
+        const dd = sseDelta(j);
+        if (onDelta.think && dd.r) onDelta(dd.r, true);
+        if (dd.c) onDelta(dd.c);
       }
     }
   }
@@ -4365,6 +4363,22 @@ async function uploadPicture(msg, k, data, tries = 0){
 }
 const jobId = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; return Array.from(crypto.getRandomValues(new Uint8Array(20)), x => A[x % A.length]).join(''); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// one piece of a streamed answer, whatever the provider's format: { c: text, r: reasoning }
+function sseDelta(j){
+  let c = '', r = '';
+  const ch = j && j.choices && j.choices[0];
+  if (ch){
+    const d = ch.delta || ch.message || {};
+    const cc = d.content;
+    if (typeof cc === 'string') c = cc; else if (Array.isArray(cc)) c = cc.map(x => (x && (x.text || (typeof x.content === 'string' ? x.content : ''))) || '').join('');
+    if (!c && typeof ch.text === 'string') c = ch.text;
+    const rr = d.reasoning_content || d.reasoning || d.thinking;
+    if (typeof rr === 'string') r = rr; else if (rr && typeof rr.content === 'string') r = rr.content;
+  } else if (j && j.type === 'response.output_text.delta' && typeof j.delta === 'string') c = j.delta;
+  else if (j && /^response\.reasoning.*\.delta$/.test(j.type || '') && typeof j.delta === 'string') r = j.delta;
+  else if (j && j.type === 'content_block_delta' && j.delta){ if (j.delta.type === 'text_delta') c = j.delta.text || ''; else if (j.delta.type === 'thinking_delta') r = j.delta.thinking || ''; }
+  return { c, r };
+}
 // Ask the server how the answer is going: every 2 s while the page is open, not at all while it's hidden.
 async function followJob(id, cb, signal){
   let miss = 0, fails = 0, lastAt = 0, seenAt = Date.now();
@@ -4381,6 +4395,7 @@ async function followJob(id, cb, signal){
       await sleep(2500); continue;
     }
     // nothing new for 3 minutes: the server run ended without finishing — keep what's written
+    if (j.status === 'error') throw Object.assign(new Error(j.error || 'upstream unavailable'), { status: j.httpStatus || 502 });
     if (j.at !== lastAt){ lastAt = j.at; seenAt = Date.now(); }
     if (j.status === 'run' && Date.now() - seenAt > 180000 && (j.raw || j.think)) j = Object.assign({}, j, { status: 'done' });
     cb(j);
@@ -4445,7 +4460,7 @@ async function runBot(){
       if (left > 0) show.chars = Math.min(src.text.length, show.chars + Math.max(3, Math.ceil(left / 16)));
     }
     bot.think = L.slice(0, show.lines).join('\n');
-    bot.thinking = !!L.length && !show.textAt || src.open;
+    bot.thinking = !!L.length && !show.textAt || src.open || (!src.text && !src.done);
     bot.text = src.text.slice(0, show.chars);
     const key = show.lines + ':' + show.chars + ':' + bot.thinking;
     if (key !== painted){ painted = key; if (!raf) raf = requestAnimationFrame(paint); }
@@ -4457,7 +4472,7 @@ async function runBot(){
   const tick = setInterval(() => { if (!bot.thinking) return; const e = bot.el && bot.el.querySelector('.th-time'); if (e) e.textContent = fmtDur(Date.now() - bot.t0); }, 1000);
   chatAbort = new AbortController(); setBusy(true);
   const ac = chatAbort;
-  ac.signal.addEventListener('abort', () => { if (ac.userStop) AI.post('job-stop', { id: job }).catch(() => {}); }, { once: true });
+  ac.signal.addEventListener('abort', () => { if (ac.userStop) AI.post('job-stop', { id: bot.job }).catch(() => {}); }, { once: true });
   try {
     const msgs = [{ role:'system', content: sysFor(state.convMode, model) }].concat(history);
     const onD = (d, isR) => {
@@ -4471,24 +4486,37 @@ async function runBot(){
     };
     onD.think = true;
     const extra = { mode: state.convMode, effort: state.speed, conv: state.chatId || '', memory: state.memOn !== false, job };
-    try { await AI.chat(model, msgs, onD, ac.signal, false, extra); }
+    const attempt = async () => {
+    try { await AI.chat(model, msgs, onD, ac.signal, false, Object.assign({}, extra, { job: bot.job })); }
     catch(e1){
       if (e1 && e1.name === 'AbortError') throw e1;
       if ((e1 && e1.cont) || !(e1 && (e1.status || e1.code))){
         // the connection broke (phone locked, browser closed for a while…) — the server kept writing: pick the answer up there
-        const j = await followJob(job, jj => {
+        const j = await followJob(bot.job, jj => {
           bot.raw = jj.raw || ''; native = jj.think || '';
           const sp = splitThink(bot.raw, true);
           src.think = (native.trim() + (native.trim() && sp.think ? '\n' : '') + sp.think).trim(); src.text = sp.text;
           bot.tm = (thinkLineCount(native) ? [[0, thinkLineCount(native)]] : []).concat(sp.marks);
           src.open = jj.status === 'run' && (sp.open || (!!native && !sp.text.trim()));
           stepShow();
-        }, ac.signal).catch(e2 => { throw e2 && e2.name === 'AbortError' ? e2 : (e1 && e1.cont ? Object.assign(new Error('lost'), { empty: true }) : e1); });
+        }, ac.signal).catch(e2 => { throw e2 && (e2.name === 'AbortError' || e2.status) ? e2 : (e1 && e1.cont ? Object.assign(new Error('lost'), { empty: true }) : e1); });
         if (j.status === 'stopped') bot.stopped = true;
       } else {
         if (bot.text || (e1 && e1.code === 'limit') || !(e1 && (e1.status >= 500 || /upstream/i.test(e1.message || '')))) throw e1;
-        await AI.chat(model, msgs, onD, ac.signal, true, Object.assign({}, extra, { job: '' }));
+        // the model's provider failed before writing anything: try once more (a new answer id), quietly
+        bot.job = jobId(); saveCurrent(); flushPush(state.chatId);
+        await sleep(1200);
+        await AI.chat(model, msgs, onD, ac.signal, false, Object.assign({}, extra, { job: bot.job }));
       }
+    }
+    };
+    await attempt();
+    // nothing to show (the model may have spent the whole answer thinking, or the provider sent nothing): one more quiet try
+    if (!splitThink(bot.raw, false).text.trim() && !ac.signal.aborted && !bot.stopped){
+      bot.raw = ''; native = ''; src.think = ''; src.text = ''; src.open = false; show.lines = 0; show.chars = 0; show.textAt = 0; bot.tm = [];
+      bot.job = jobId(); saveCurrent(); flushPush(state.chatId);
+      await sleep(800);
+      await attempt();
     }
     // the whole answer is here: let the reasoning and the answer finish appearing (at most a few seconds)
     { const sp = splitThink(bot.raw, false); src.think = (native.trim() + (native.trim() && sp.think ? '\n' : '') + sp.think).trim(); src.text = sp.text; bot.tm = (thinkLineCount(native) ? [[0, thinkLineCount(native)]] : []).concat(sp.marks); }
@@ -4526,20 +4554,22 @@ async function runBot(){
 // Copying works in normal browsers and in in-app browsers (Telegram, Instagram…), where the modern clipboard API is often blocked
 function legacyCopy(txt){
   const ta = document.createElement('textarea');
-  ta.value = txt; ta.setAttribute('readonly', '');
+  ta.value = txt; ta.contentEditable = 'true';   // iPhone copies only from an editable field
   ta.style.cssText = 'position:fixed;top:0;left:0;width:2px;height:2px;padding:0;border:0;opacity:0;font-size:16px';
   document.body.appendChild(ta);
   const sel = document.getSelection(), old = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
-  ta.focus({ preventScroll: true }); ta.select(); ta.setSelectionRange(0, txt.length);
+  ta.focus({ preventScroll: true }); ta.select();
+  try { const rg = document.createRange(); rg.selectNodeContents(ta); sel.removeAllRanges(); sel.addRange(rg); } catch(e){}
+  ta.setSelectionRange(0, txt.length);
   let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
   ta.remove(); if (old && sel){ sel.removeAllRanges(); sel.addRange(old); }
   return ok;
 }
 function copyRaw(txt, done){
   if (!txt) return;
-  if (legacyCopy(txt)) return done();
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => toast(t('m.copyFail')));
-  else toast(t('m.copyFail'));
+  const old = () => { if (legacyCopy(txt)) done(); else toast(t('m.copyFail')); };
+  if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) navigator.clipboard.writeText(txt).then(done, old);
+  else old();
 }
 function copyText(txt, btn){
   copyRaw(txt, () => { if (!btn) return; btn.innerHTML = IC.ok; btn.classList.add('done'); setTimeout(() => { btn.innerHTML = IC.copy; btn.classList.remove('done'); }, 1300); });
