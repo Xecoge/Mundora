@@ -704,6 +704,65 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
 .plans-head .sale-pill{margin-top:14px}
 .price s{color:var(--faint);font-size:18px;font-weight:700;margin-left:2px}
 .price .disc{align-self:center;padding:4px 9px;border-radius:999px;font-size:12.5px;font-weight:800;background:var(--grad);color:var(--on-grad)}
+
+/* ============ ATTACHMENTS / IMAGES / PROJECTS ============ */
+.att-row{display:flex;flex-wrap:wrap;gap:8px}
+.att-row:not(:empty){margin-bottom:10px}
+.att{position:relative;display:flex;align-items:center;gap:8px;max-width:210px;height:52px;padding:4px 30px 4px 4px;border-radius:14px;background:var(--surface-2);border:1px solid var(--stroke)}
+.att img{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none}
+.att .fi{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--surface);color:var(--muted);flex:none;font-size:10px;font-weight:800;text-transform:uppercase}
+.att span{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.att button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--bg2);color:var(--muted);font-size:13px;line-height:1}
+.u-att{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;margin-bottom:6px}
+.u-att img{width:96px;height:96px;object-fit:cover;border-radius:16px;border:1px solid var(--stroke)}
+.u-att .uf{padding:7px 11px;border-radius:12px;background:var(--surface-2);border:1px solid var(--stroke);font-size:12.5px;font-weight:700}
+.gen-imgs{display:grid;gap:10px;margin-top:4px}
+.gen-imgs figure{position:relative;margin:0;border-radius:20px;overflow:hidden;border:1px solid var(--stroke);max-width:520px}
+.gen-imgs img{display:block;width:100%;height:auto}
+.gen-imgs a{position:absolute;right:10px;bottom:10px;height:36px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font-size:13px;font-weight:800;color:#fff;background:rgba(10,8,18,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-decoration:none}
+.proj-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;height:38px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:800;background:var(--grad-soft);border:1px solid var(--stroke-2);white-space:normal}
+.proj-link svg{width:16px;height:16px}
+.mi .mlock{margin-left:auto;flex:none;padding:4px 9px;border-radius:999px;font-size:11.5px;font-weight:800;color:var(--accent-ink);border:1px solid var(--stroke-2)}
+.mi.locked b{opacity:.7}
+.pj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px;margin-top:6px}
+.pj-grid:empty{display:none}
+.pj{display:flex;flex-direction:column;text-align:left;border-radius:24px;overflow:hidden;background:var(--surface);border:1px solid var(--stroke);transition:transform .25s var(--ease),border-color .25s}
+.pj:active{transform:scale(.98)}
+.pj-shot{position:relative;aspect-ratio:9/15;overflow:hidden;background:#0b0a12;border-bottom:1px solid var(--stroke)}
+.pj-shot iframe{position:absolute;top:0;left:0;width:300%;height:300%;transform:scale(.3334);transform-origin:0 0;border:0;pointer-events:none;background:#fff}
+.pj-shot pre{margin:0;padding:12px;font-size:9.5px;line-height:1.45;color:#cfc8dc;white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;height:100%;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
+.pj-shot .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint)}
+.pj-shot .ph svg{width:38px;height:38px}
+.pj-info{display:flex;align-items:center;gap:10px;padding:12px 12px 13px 14px}
+.pj-info>div{flex:1;min-width:0}
+.pj-info b{display:block;font-size:14.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-info small{display:block;color:var(--faint);font-size:12px;margin-top:2px}
+.pj-ico{width:36px;height:36px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--grad-soft);border:1px solid var(--stroke-2);color:var(--accent-ink)}
+.pj-ico svg{width:18px;height:18px}
+.pv-sheet{max-height:94dvh}
+.pv-sheet .sheet-head{gap:10px}
+.pv-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.pv-title>div{min-width:0}
+.pv-title h3{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(20px,6vw,28px)}
+.pv-title small{color:var(--faint);font-size:12.5px}
+.pv-ico{width:42px;height:42px;flex:none;border-radius:14px;display:grid;place-items:center;background:var(--grad-soft);border:1px solid var(--stroke-2);color:var(--accent-ink)}
+.pv-ico svg{width:20px;height:20px}
+.pv-bar{display:flex;align-items:center;gap:10px;margin:8px 0 12px}
+.pv-bar .seg{margin:0}
+.pv-ver{margin-left:auto;height:38px;padding:0 12px;border-radius:12px;background:var(--surface);border:1px solid var(--stroke-2);color:var(--text);font-weight:700;font-size:13px}
+.pv-body{display:flex;justify-content:center}
+.pv-phone{width:min(100%,360px);aspect-ratio:9/17;max-height:62dvh;border-radius:30px;overflow:hidden;border:8px solid #1b1825;box-shadow:0 24px 50px -24px rgba(0,0,0,.7);background:#fff}
+.pv-phone iframe{width:100%;height:100%;border:0;display:block}
+.pv-code{width:100%;max-height:62dvh;overflow:auto}
+.pv-code .code{margin:0 0 10px}
+.pv-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pv-actions .btn{height:44px;padding:0 16px;font-size:14px;flex:1 1 auto}
+.am{display:flex;align-items:center;gap:12px;width:100%;padding:10px 6px;border-top:1px solid var(--stroke);text-align:left}
+.am:first-child{border-top:0}
+.am .mt{flex:1;min-width:0}.am b{display:block;font-size:14.5px}.am small{color:var(--faint);font-size:12px;font-family:ui-monospace,monospace;word-break:break-all}
+.am .tag{flex:none;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid var(--stroke-2)}
+.am .tag.pr{color:var(--accent-ink);background:var(--grad-soft)}
+.am .tag.fr{color:var(--ok)}
 </style>
 </head>
 <body data-page="home">
@@ -899,9 +958,10 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
 
   <div class="composer">
     <label class="sr" for="homeInput">Prompt</label>
+    <div class="att-row" id="att-home"></div>
     <textarea id="homeInput" rows="3"></textarea>
     <div class="composer-row">
-      <button class="attach" aria-label="Attach" data-toast="toast.attach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="attach" aria-label="Attach" data-attach="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="chip mchip" data-open="sheet-models"><span class="mchip-ico"></span><span class="mname"></span><svg viewBox="0 0 24 24" style="width:12px;height:12px;opacity:.6"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <button class="send" id="homeSend" disabled aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg></button>
     </div>
@@ -946,7 +1006,7 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
 <section class="page" data-page="projects">
   <div class="p-hero">
     <div>
-      <span class="eyebrow acc"><span data-i18n="proj.kicker"></span>: 0</span>
+      <span class="eyebrow acc"><span data-i18n="proj.kicker"></span>: <span id="projTotal">0</span></span>
       <h1 data-i18n="proj.title"></h1>
       <p data-i18n="proj.lead"></p>
     </div>
@@ -1002,9 +1062,10 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
   </div>
 
   <div class="tabs" id="projTabs"></div>
-  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input data-i18n-ph="proj.search" aria-label="Search"></div>
-  <div class="meta"><span><span data-i18n="proj.count"></span> 0</span><button><span data-i18n="proj.sort"></span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-  <div class="empty-card">
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="projSearch" data-i18n-ph="proj.search" aria-label="Search"></div>
+  <div class="meta"><span><span data-i18n="proj.count"></span> <span id="projCount">0</span></span><button><span data-i18n="proj.sort"></span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+  <div class="pj-grid" id="projGrid"></div>
+  <div class="empty-card" id="projEmpty">
     <h3 data-i18n="proj.emptyT"></h3>
     <p data-i18n="proj.emptyS"></p>
     <button class="btn btn-grad" data-open="sheet-create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="proj.emptyBtn"></span></button>
@@ -1265,6 +1326,9 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
     <div id="pcList"></div>
   </div>
 
+  <div class="apane" data-apane="models">
+    <div class="card adm-card"><p class="adm-hint" data-i18n="adm.mHint" style="margin-top:0"></p><div id="amList"></div></div>
+  </div>
   <div class="apane" data-apane="sale">
     <div class="card adm-card">
       <p class="adm-state" id="saleState"></p>
@@ -1312,13 +1376,15 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
     <button type="button" class="forgot" id="blkOut" data-i18n="blk.out"></button>
   </div>
 </div>
+<input type="file" id="fileIn" multiple hidden accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.xml,.yml,.yaml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.swift,.c,.h,.cpp,.cs,.go,.rs,.php,.rb,.sql,.sh,.bat,.ini,.toml,.log,.vue,.svelte">
 <!-- chat composer (fixed) -->
 <div class="chat-dock">
   <div class="composer">
     <div class="edit-bar" id="editBar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span data-i18n="chat.editing"></span><button type="button" id="editCancel" aria-label="Cancel"><svg viewBox="0 0 24 24"><use href="#ic-close"/></svg></button></div>
+    <div class="att-row" id="att-chat"></div>
     <textarea id="chatInput" rows="1" data-i18n-ph="chat.ph"></textarea>
     <div class="composer-row">
-      <button class="attach" aria-label="Attach" data-toast="toast.attach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="attach" aria-label="Attach" data-attach="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="chip mchip" data-open="sheet-models"><span class="mchip-ico"></span><span class="mname"></span></button>
       <button class="send" id="chatSend" disabled aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg></button>
     </div>
@@ -1371,6 +1437,22 @@ body.is-blocked .dock,body.is-blocked .chat-dock{display:none!important}
   </div>
 </div>
 
+<div class="sheet-wrap" id="sheet-proj" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <div class="sheet pv-sheet" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sheet-head"><div class="pv-title"><span class="pv-ico" id="pvIco"></span><div><h3 id="pvTitle"></h3><small id="pvMeta"></small></div></div><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><use href="#ic-close"/></svg></button></div>
+    <div class="pv-bar"><div class="seg small" id="pvSeg"><span class="thumb"></span><button type="button" data-pv="preview" data-i18n="proj.preview"></button><button type="button" data-pv="code" data-i18n="proj.code"></button></div><select class="pv-ver" id="pvVer"></select></div>
+    <div class="pv-body" id="pvBody"></div>
+    <div class="pv-actions">
+      <button type="button" class="btn btn-primary" id="pvOpen" data-i18n="proj.openTab"></button>
+      <button type="button" class="btn btn-ghost" id="pvDl" data-i18n="proj.download"></button>
+      <button type="button" class="btn btn-ghost" id="pvCopy" data-i18n="proj.copy"></button>
+      <button type="button" class="btn btn-ghost" id="pvChat" data-i18n="proj.toChat"></button>
+      <button type="button" class="btn btn-danger" id="pvDel" data-i18n="proj.del"></button>
+    </div>
+  </div>
+</div>
 <div class="sheet-wrap" id="sheet-history" aria-hidden="true">
   <div class="backdrop" data-close></div>
   <div class="sheet" role="dialog" aria-modal="true">
@@ -1462,7 +1544,7 @@ en:{
  'chat.new':'New conversation','chat.history':'History','chat.emptyT':'Start a conversation','chat.emptyS':'Ask a question, brainstorm an idea or paste a text — Mundora will take it from there.','chat.ph':'Message Mundora…',
  'chat.noModel':'No model is connected yet. As soon as models are available, they’ll appear in the model picker — and I’ll answer right here.',
  'models.title':'Model','models.search':'Name or ID','models.emptyT':'Models are on their way','models.emptyS':'We’re connecting the first models. They’ll show up here soon.',
- 'chat.toBottom':'To the latest message','chat.editing':'Editing message','chat.copy':'Copy','chat.edit':'Edit','chat.regen':'Regenerate','hist.today':'Today','hist.earlier':'Earlier','hist.del':'Delete','v.nomail':'Email codes aren’t set up on the server yet (BREVO_API_KEY / MAIL_FROM in Vercel).','v.nostore':'The database isn’t connected on the server yet (Upstash in Vercel → Storage).','v.server':'Server error: {e}','v.k':'Almost there','v.t':'Check your email','v.lead':'We sent a 6-digit code to {email}. Enter it below to confirm your account.','v.btn':'Confirm','v.resend':'Send the code again','v.resendIn':'Send again in {t}','v.bad':'Wrong code. Attempts left: {n}','v.short':'Enter all 6 digits','v.expired':'The code has expired — send a new one','v.attempts':'Too many attempts — send a new code','v.hour':'Too many codes — try again in an hour','v.mailfail':'Couldn’t send the email. Try again a bit later.','v.sent':'New code sent','v.spam':'No email yet? Wait a minute and check Spam, Promotions or Updates — it sometimes lands there.','v.wrong':'Wrong email?','v.out':'Sign out','m.err.verify':'Confirm your email to start chatting.','adm.k':'Admin panel','adm.t':'Control room','adm.users':'Users','adm.promos':'Promo codes','adm.sale':'Sale','adm.count':'Accounts: {n}','adm.find':'Find by email','adm.findBtn':'Find','adm.nouser':'No account with this email yet — the person has to sign in at least once.','adm.plan':'Plan','adm.forever':'forever','adm.until':'until {d}','adm.days':'days (0 = forever)','adm.give':'Give plan','adm.take':'Take away subscription','adm.tokens':'Bonus tokens','adm.add':'Add','adm.tokHint':'a minus number takes tokens away','adm.disc':'Personal discount','adm.discBtn':'Give discount','adm.pct':'%','adm.status':'Account','adm.active':'Active','adm.frozen':'Frozen','adm.deleted':'Deleted','adm.reason':'Reason (optional)','adm.freeze':'Freeze','adm.delete':'Delete (ban)','adm.restore':'Unban / restore','adm.reset':'Reset limits','adm.used':'Used: 5 h — {w}, month — {m}','adm.bonus':'Bonus: {n}','adm.seen':'Last visit: {d}','adm.saved':'Saved','adm.confirmDel':'Delete (ban) this account?','adm.code':'Code','adm.gen':'Generate','adm.type':'What it gives','adm.tTokens':'Bonus tokens','adm.tPlan':'Plan for N days','adm.tDisc':'Discount on plans','adm.value':'Amount','adm.valTok':'tokens','adm.valPct':'percent','adm.forPlan':'Plan','adm.forPlans':'For plans','adm.all':'All plans','adm.pdays':'Days','adm.max':'Max uses (0 = no limit)','adm.exp':'Valid until (empty = no end)','adm.note':'Note for you','adm.create':'Create code','adm.none':'No codes yet','adm.uses':'used {u}{m}','adm.expd':'until {d}','adm.del':'Delete','adm.saleHint':'A sale lowers plan prices for everyone and shows a banner on the site.','adm.salePct':'Discount, %','adm.saleUntil':'Ends (empty = until you turn it off)','adm.saleText':'Banner text ({l})','adm.saleSave':'Start / update sale','adm.saleOff':'Turn the sale off','adm.saleOn':'Sale is on: −{p}%','adm.saleNone':'No sale right now','set.admin':'Admin panel','blk.frozen':'Account frozen','blk.deleted':'Account deleted','blk.fs':'frozen','blk.ds':'deleted','blk.text':'Your account «{name}» has been {state}. If you think this is a mistake, write to our support:','blk.reason':'Reason: {r}','blk.mail':'Write to support','blk.copy':'Copy address','blk.copied':'Address copied','blk.out':'Sign out','sale.def':'Sale: −{p}% on plans','sale.until':'until {d}','promo.disc':'Done! −{p}% on plans for {days} days','promo.nostore':'Promo codes start working once the database is connected (Upstash in Vercel → Storage)','promo.out':'This code has run out','promo.expired':'This code has expired','disc.badge':'−{p}%','hist.emptyT':'No conversations yet','hist.emptyS':'Your chats will be saved here so you can come back to them.',
+ 'chat.toBottom':'To the latest message','chat.editing':'Editing message','chat.copy':'Copy','chat.edit':'Edit','chat.regen':'Regenerate','hist.today':'Today','hist.earlier':'Earlier','hist.del':'Delete','v.nomail':'Email codes aren’t set up on the server yet (BREVO_API_KEY / MAIL_FROM in Vercel).','v.nostore':'The database isn’t connected on the server yet (Upstash in Vercel → Storage).','v.server':'Server error: {e}','v.k':'Almost there','v.t':'Check your email','v.lead':'We sent a 6-digit code to {email}. Enter it below to confirm your account.','v.btn':'Confirm','v.resend':'Send the code again','v.resendIn':'Send again in {t}','v.bad':'Wrong code. Attempts left: {n}','v.short':'Enter all 6 digits','v.expired':'The code has expired — send a new one','v.attempts':'Too many attempts — send a new code','v.hour':'Too many codes — try again in an hour','v.mailfail':'Couldn’t send the email. Try again a bit later.','v.sent':'New code sent','v.spam':'No email yet? Wait a minute and check Spam, Promotions or Updates — it sometimes lands there.','v.wrong':'Wrong email?','v.out':'Sign out','m.err.verify':'Confirm your email to start chatting.','adm.k':'Admin panel','adm.t':'Control room','adm.users':'Users','adm.promos':'Promo codes','adm.sale':'Sale','adm.count':'Accounts: {n}','adm.find':'Find by email','adm.findBtn':'Find','adm.nouser':'No account with this email yet — the person has to sign in at least once.','adm.plan':'Plan','adm.forever':'forever','adm.until':'until {d}','adm.days':'days (0 = forever)','adm.give':'Give plan','adm.take':'Take away subscription','adm.tokens':'Bonus tokens','adm.add':'Add','adm.tokHint':'a minus number takes tokens away','adm.disc':'Personal discount','adm.discBtn':'Give discount','adm.pct':'%','adm.status':'Account','adm.active':'Active','adm.frozen':'Frozen','adm.deleted':'Deleted','adm.reason':'Reason (optional)','adm.freeze':'Freeze','adm.delete':'Delete (ban)','adm.restore':'Unban / restore','adm.reset':'Reset limits','adm.used':'Used: 5 h — {w}, month — {m}','adm.bonus':'Bonus: {n}','adm.seen':'Last visit: {d}','adm.saved':'Saved','adm.confirmDel':'Delete (ban) this account?','adm.code':'Code','adm.gen':'Generate','adm.type':'What it gives','adm.tTokens':'Bonus tokens','adm.tPlan':'Plan for N days','adm.tDisc':'Discount on plans','adm.value':'Amount','adm.valTok':'tokens','adm.valPct':'percent','adm.forPlan':'Plan','adm.forPlans':'For plans','adm.all':'All plans','adm.pdays':'Days','adm.max':'Max uses (0 = no limit)','adm.exp':'Valid until (empty = no end)','adm.note':'Note for you','adm.create':'Create code','adm.none':'No codes yet','adm.uses':'used {u}{m}','adm.expd':'until {d}','adm.del':'Delete','adm.saleHint':'A sale lowers plan prices for everyone and shows a banner on the site.','adm.salePct':'Discount, %','adm.saleUntil':'Ends (empty = until you turn it off)','adm.saleText':'Banner text ({l})','adm.saleSave':'Start / update sale','adm.saleOff':'Turn the sale off','adm.saleOn':'Sale is on: −{p}%','adm.saleNone':'No sale right now','set.admin':'Admin panel','blk.frozen':'Account frozen','blk.deleted':'Account deleted','blk.fs':'frozen','blk.ds':'deleted','blk.text':'Your account «{name}» has been {state}. If you think this is a mistake, write to our support:','blk.reason':'Reason: {r}','blk.mail':'Write to support','blk.copy':'Copy address','blk.copied':'Address copied','blk.out':'Sign out','sale.def':'Sale: −{p}% on plans','sale.until':'until {d}','promo.disc':'Done! −{p}% on plans for {days} days','promo.nostore':'Promo codes start working once the database is connected (Upstash in Vercel → Storage)','promo.out':'This code has run out','promo.expired':'This code has expired','disc.badge':'−{p}%','m.images':'Images','m.lock':'Orbit+','m.premiumT':'This model is available on Orbit and higher plans','m.err.premium':'This model is available on paid plans (Orbit and higher). Pick another model or upgrade.','img.dl':'Download','img.gen':'Drawing…','att.big':'The file is bigger than {n} MB — your plan’s limit','att.type':'This file type isn’t supported yet: images and text files (txt, md, code, csv, json) work','att.many':'Up to 6 attachments per message','att.heavy':'The attachments are too heavy for one message','att.file':'File','proj.saved':'Saved to Projects','proj.open':'Open','proj.versions':'Versions: {n}','proj.preview':'Preview','proj.code':'Code','proj.openTab':'Open in a new tab','proj.download':'Download','proj.copy':'Copy code','proj.toChat':'Go to chat','proj.del':'Delete project','proj.delQ':'Delete this project?','proj.version':'Version {n}','proj.noPrev':'No preview — open the Code tab','pt.site':'Site','pt.code':'Code','pt.game':'Game','pt.slides':'Presentation','adm.models':'Models','adm.mHint':'Paid models work only on Orbit and higher plans. Tap a model to switch.','adm.free':'Free','adm.premium':'Paid','adm.def':'default','hist.emptyT':'No conversations yet','hist.emptyS':'Your chats will be saved here so you can come back to them.',
  'proj.kicker':'Total projects','proj.title':'Projects','proj.lead':'Every generation and every edit is saved as its own version — you can always roll back.','proj.newSite':'New site','proj.slides':'Presentation',
  'proj.tabs':['All','Sites','Code','Presentations','Games'],'proj.search':'Search by name or description','proj.count':'Projects:','proj.sort':'Recently updated',
  'proj.emptyT':'Your first project will live here','proj.emptyS':'Create a site, presentation, program or game. Every saved version stays right here.','proj.emptyBtn':'Create project',
@@ -1519,7 +1601,7 @@ ru:{
  'chat.new':'Новый разговор','chat.history':'История','chat.emptyT':'Начните разговор','chat.emptyS':'Задайте вопрос, обсудите идею или вставьте текст — Mundora подхватит.','chat.ph':'Сообщение для Mundora…',
  'chat.noModel':'Модель пока не подключена. Как только модели появятся, они будут в списке выбора — и я отвечу прямо здесь.',
  'models.title':'Модель','models.search':'Название или ID','models.emptyT':'Модели уже в пути','models.emptyS':'Мы подключаем первые модели — скоро они появятся здесь.',
- 'chat.toBottom':'К последнему сообщению','chat.editing':'Редактирование сообщения','chat.copy':'Копировать','chat.edit':'Изменить','chat.regen':'Ответить заново','hist.today':'Сегодня','hist.earlier':'Ранее','hist.del':'Удалить','v.nomail':'На сервере ещё не настроена отправка кодов (BREVO_API_KEY и MAIL_FROM в Vercel).','v.nostore':'На сервере ещё не подключена база (Upstash в Vercel → Storage).','v.server':'Ошибка сервера: {e}','v.k':'Почти готово','v.t':'Проверьте почту','v.lead':'Мы отправили 6-значный код на {email}. Введите его ниже, чтобы подтвердить аккаунт.','v.btn':'Подтвердить','v.resend':'Отправить код ещё раз','v.resendIn':'Отправить снова через {t}','v.bad':'Неверный код. Осталось попыток: {n}','v.short':'Введите все 6 цифр','v.expired':'Код устарел — отправьте новый','v.attempts':'Слишком много попыток — отправьте новый код','v.hour':'Слишком много кодов — попробуйте через час','v.mailfail':'Не удалось отправить письмо. Попробуйте чуть позже.','v.sent':'Новый код отправлен','v.spam':'Письма нет? Подождите минуту и загляните в «Спам», «Промоакции» или «Оповещения» — иногда оно попадает туда.','v.wrong':'Не та почта?','v.out':'Выйти','m.err.verify':'Подтвердите почту, чтобы начать общение.','adm.k':'Админ-панель','adm.t':'Управление','adm.users':'Пользователи','adm.promos':'Промокоды','adm.sale':'Акция','adm.count':'Аккаунтов: {n}','adm.find':'Найти по почте','adm.findBtn':'Найти','adm.nouser':'Аккаунта с такой почтой пока нет — человек должен хотя бы раз войти на сайт.','adm.plan':'Тариф','adm.forever':'навсегда','adm.until':'до {d}','adm.days':'дней (0 = навсегда)','adm.give':'Выдать тариф','adm.take':'Забрать подписку','adm.tokens':'Бонусные токены','adm.add':'Начислить','adm.tokHint':'число с минусом забирает токены','adm.disc':'Личная скидка','adm.discBtn':'Дать скидку','adm.pct':'%','adm.status':'Аккаунт','adm.active':'Активен','adm.frozen':'Заморожен','adm.deleted':'Удалён','adm.reason':'Причина (необязательно)','adm.freeze':'Заморозить','adm.delete':'Удалить (бан)','adm.restore':'Разбанить / восстановить','adm.reset':'Сбросить лимиты','adm.used':'Потрачено: 5 ч — {w}, месяц — {m}','adm.bonus':'Бонусы: {n}','adm.seen':'Последний визит: {d}','adm.saved':'Сохранено','adm.confirmDel':'Удалить (забанить) этот аккаунт?','adm.code':'Код','adm.gen':'Придумать','adm.type':'Что даёт','adm.tTokens':'Бонусные токены','adm.tPlan':'Тариф на N дней','adm.tDisc':'Скидку на тарифы','adm.value':'Сколько','adm.valTok':'токенов','adm.valPct':'процентов','adm.forPlan':'Тариф','adm.forPlans':'На тарифы','adm.all':'Все тарифы','adm.pdays':'Дней','adm.max':'Сколько раз можно использовать (0 = без ограничений)','adm.exp':'Действует до (пусто = бессрочно)','adm.note':'Заметка для себя','adm.create':'Создать код','adm.none':'Кодов пока нет','adm.uses':'использован {u}{m}','adm.expd':'до {d}','adm.del':'Удалить','adm.saleHint':'Акция снижает цены тарифов для всех и показывает плашку на сайте.','adm.salePct':'Скидка, %','adm.saleUntil':'Закончится (пусто = пока не выключите)','adm.saleText':'Текст плашки ({l})','adm.saleSave':'Запустить / обновить акцию','adm.saleOff':'Выключить акцию','adm.saleOn':'Акция идёт: −{p}%','adm.saleNone':'Сейчас акции нет','set.admin':'Админ-панель','blk.frozen':'Аккаунт заморожен','blk.deleted':'Аккаунт удалён','blk.fs':'заморожен','blk.ds':'удалён','blk.text':'Ваш аккаунт «{name}» {state}. Если вы считаете, что это ошибка, напишите в поддержку:','blk.reason':'Причина: {r}','blk.mail':'Написать в поддержку','blk.copy':'Скопировать адрес','blk.copied':'Адрес скопирован','blk.out':'Выйти','sale.def':'Акция: −{p}% на тарифы','sale.until':'до {d}','promo.disc':'Готово! −{p}% на тарифы на {days} дн.','promo.nostore':'Промокоды заработают после подключения базы (Upstash в Vercel → Storage)','promo.out':'Этот код уже закончился','promo.expired':'Срок действия кода истёк','disc.badge':'−{p}%','hist.emptyT':'Пока нет разговоров','hist.emptyS':'Здесь будут сохраняться ваши чаты, чтобы к ним можно было вернуться.',
+ 'chat.toBottom':'К последнему сообщению','chat.editing':'Редактирование сообщения','chat.copy':'Копировать','chat.edit':'Изменить','chat.regen':'Ответить заново','hist.today':'Сегодня','hist.earlier':'Ранее','hist.del':'Удалить','v.nomail':'На сервере ещё не настроена отправка кодов (BREVO_API_KEY и MAIL_FROM в Vercel).','v.nostore':'На сервере ещё не подключена база (Upstash в Vercel → Storage).','v.server':'Ошибка сервера: {e}','v.k':'Почти готово','v.t':'Проверьте почту','v.lead':'Мы отправили 6-значный код на {email}. Введите его ниже, чтобы подтвердить аккаунт.','v.btn':'Подтвердить','v.resend':'Отправить код ещё раз','v.resendIn':'Отправить снова через {t}','v.bad':'Неверный код. Осталось попыток: {n}','v.short':'Введите все 6 цифр','v.expired':'Код устарел — отправьте новый','v.attempts':'Слишком много попыток — отправьте новый код','v.hour':'Слишком много кодов — попробуйте через час','v.mailfail':'Не удалось отправить письмо. Попробуйте чуть позже.','v.sent':'Новый код отправлен','v.spam':'Письма нет? Подождите минуту и загляните в «Спам», «Промоакции» или «Оповещения» — иногда оно попадает туда.','v.wrong':'Не та почта?','v.out':'Выйти','m.err.verify':'Подтвердите почту, чтобы начать общение.','adm.k':'Админ-панель','adm.t':'Управление','adm.users':'Пользователи','adm.promos':'Промокоды','adm.sale':'Акция','adm.count':'Аккаунтов: {n}','adm.find':'Найти по почте','adm.findBtn':'Найти','adm.nouser':'Аккаунта с такой почтой пока нет — человек должен хотя бы раз войти на сайт.','adm.plan':'Тариф','adm.forever':'навсегда','adm.until':'до {d}','adm.days':'дней (0 = навсегда)','adm.give':'Выдать тариф','adm.take':'Забрать подписку','adm.tokens':'Бонусные токены','adm.add':'Начислить','adm.tokHint':'число с минусом забирает токены','adm.disc':'Личная скидка','adm.discBtn':'Дать скидку','adm.pct':'%','adm.status':'Аккаунт','adm.active':'Активен','adm.frozen':'Заморожен','adm.deleted':'Удалён','adm.reason':'Причина (необязательно)','adm.freeze':'Заморозить','adm.delete':'Удалить (бан)','adm.restore':'Разбанить / восстановить','adm.reset':'Сбросить лимиты','adm.used':'Потрачено: 5 ч — {w}, месяц — {m}','adm.bonus':'Бонусы: {n}','adm.seen':'Последний визит: {d}','adm.saved':'Сохранено','adm.confirmDel':'Удалить (забанить) этот аккаунт?','adm.code':'Код','adm.gen':'Придумать','adm.type':'Что даёт','adm.tTokens':'Бонусные токены','adm.tPlan':'Тариф на N дней','adm.tDisc':'Скидку на тарифы','adm.value':'Сколько','adm.valTok':'токенов','adm.valPct':'процентов','adm.forPlan':'Тариф','adm.forPlans':'На тарифы','adm.all':'Все тарифы','adm.pdays':'Дней','adm.max':'Сколько раз можно использовать (0 = без ограничений)','adm.exp':'Действует до (пусто = бессрочно)','adm.note':'Заметка для себя','adm.create':'Создать код','adm.none':'Кодов пока нет','adm.uses':'использован {u}{m}','adm.expd':'до {d}','adm.del':'Удалить','adm.saleHint':'Акция снижает цены тарифов для всех и показывает плашку на сайте.','adm.salePct':'Скидка, %','adm.saleUntil':'Закончится (пусто = пока не выключите)','adm.saleText':'Текст плашки ({l})','adm.saleSave':'Запустить / обновить акцию','adm.saleOff':'Выключить акцию','adm.saleOn':'Акция идёт: −{p}%','adm.saleNone':'Сейчас акции нет','set.admin':'Админ-панель','blk.frozen':'Аккаунт заморожен','blk.deleted':'Аккаунт удалён','blk.fs':'заморожен','blk.ds':'удалён','blk.text':'Ваш аккаунт «{name}» {state}. Если вы считаете, что это ошибка, напишите в поддержку:','blk.reason':'Причина: {r}','blk.mail':'Написать в поддержку','blk.copy':'Скопировать адрес','blk.copied':'Адрес скопирован','blk.out':'Выйти','sale.def':'Акция: −{p}% на тарифы','sale.until':'до {d}','promo.disc':'Готово! −{p}% на тарифы на {days} дн.','promo.nostore':'Промокоды заработают после подключения базы (Upstash в Vercel → Storage)','promo.out':'Этот код уже закончился','promo.expired':'Срок действия кода истёк','disc.badge':'−{p}%','m.images':'Изображения','m.lock':'Orbit+','m.premiumT':'Эта модель доступна на тарифах Orbit и выше','m.err.premium':'Эта модель доступна на платных тарифах (Orbit и выше). Выберите другую модель или смените тариф.','img.dl':'Скачать','img.gen':'Рисую…','att.big':'Файл больше {n} МБ — это лимит вашего тарифа','att.type':'Такой тип файла пока не поддерживается: можно картинки и текстовые файлы (txt, md, код, csv, json)','att.many':'Не больше 6 вложений в одном сообщении','att.heavy':'Вложения слишком тяжёлые для одного сообщения','att.file':'Файл','proj.saved':'Сохранено в «Проекты»','proj.open':'Открыть','proj.versions':'Версий: {n}','proj.preview':'Превью','proj.code':'Код','proj.openTab':'Открыть в новой вкладке','proj.download':'Скачать','proj.copy':'Копировать код','proj.toChat':'Перейти в чат','proj.del':'Удалить проект','proj.delQ':'Удалить этот проект?','proj.version':'Версия {n}','proj.noPrev':'Превью нет — откройте вкладку «Код»','pt.site':'Сайт','pt.code':'Код','pt.game':'Игра','pt.slides':'Презентация','adm.models':'Модели','adm.mHint':'Платные модели работают только на тарифах Orbit и выше. Нажмите на модель, чтобы переключить.','adm.free':'Бесплатная','adm.premium':'Платная','adm.def':'по умолчанию','hist.emptyT':'Пока нет разговоров','hist.emptyS':'Здесь будут сохраняться ваши чаты, чтобы к ним можно было вернуться.',
  'proj.kicker':'Всего проектов','proj.title':'Проекты','proj.lead':'Каждая генерация и каждая правка сохраняются отдельной версией — откатиться можно всегда.','proj.newSite':'Новый сайт','proj.slides':'Презентация',
  'proj.tabs':['Все','Сайты','Код','Презентации','Игры'],'proj.search':'Поиск по названию или описанию','proj.count':'Проектов:','proj.sort':'Сначала обновлённые',
  'proj.emptyT':'Здесь появится ваш первый проект','proj.emptyS':'Создайте сайт, презентацию, программу или игру. Все сохранённые версии останутся здесь.','proj.emptyBtn':'Создать проект',
@@ -1576,7 +1658,7 @@ uk:{
  'chat.new':'Нова розмова','chat.history':'Історія','chat.emptyT':'Почніть розмову','chat.emptyS':'Поставте запитання, обговоріть ідею або вставте текст — Mundora підхопить.','chat.ph':'Повідомлення для Mundora…',
  'chat.noModel':'Модель поки не підключена. Щойно моделі з’являться, вони будуть у списку вибору — і я відповім просто тут.',
  'models.title':'Модель','models.search':'Назва або ID','models.emptyT':'Моделі вже в дорозі','models.emptyS':'Ми підключаємо перші моделі — незабаром вони з’являться тут.',
- 'chat.toBottom':'До останнього повідомлення','chat.editing':'Редагування повідомлення','chat.copy':'Копіювати','chat.edit':'Змінити','chat.regen':'Відповісти знову','hist.today':'Сьогодні','hist.earlier':'Раніше','hist.del':'Видалити','v.nomail':'На сервері ще не налаштовано надсилання кодів (BREVO_API_KEY і MAIL_FROM у Vercel).','v.nostore':'На сервері ще не підключено базу (Upstash у Vercel → Storage).','v.server':'Помилка сервера: {e}','v.k':'Майже готово','v.t':'Перевірте пошту','v.lead':'Ми надіслали 6-значний код на {email}. Введіть його нижче, щоб підтвердити акаунт.','v.btn':'Підтвердити','v.resend':'Надіслати код ще раз','v.resendIn':'Надіслати знову через {t}','v.bad':'Невірний код. Залишилось спроб: {n}','v.short':'Введіть усі 6 цифр','v.expired':'Код застарів — надішліть новий','v.attempts':'Забагато спроб — надішліть новий код','v.hour':'Забагато кодів — спробуйте за годину','v.mailfail':'Не вдалося надіслати лист. Спробуйте трохи пізніше.','v.sent':'Новий код надіслано','v.spam':'Листа немає? Зачекайте хвилину й загляньте в «Спам», «Промоакції» або «Оповіщення» — інколи він потрапляє туди.','v.wrong':'Не та пошта?','v.out':'Вийти','m.err.verify':'Підтвердіть пошту, щоб почати спілкування.','adm.k':'Адмін-панель','adm.t':'Керування','adm.users':'Користувачі','adm.promos':'Промокоды','adm.sale':'Акція','adm.count':'Акаунтів: {n}','adm.find':'Знайти за поштою','adm.findBtn':'Знайти','adm.nouser':'Акаунта з такою поштою ще немає — людина має хоча б раз увійти на сайт.','adm.plan':'Тариф','adm.forever':'назавжди','adm.until':'до {d}','adm.days':'днів (0 = назавжди)','adm.give':'Видати тариф','adm.take':'Забрати підписку','adm.tokens':'Бонусні токени','adm.add':'Нарахувати','adm.tokHint':'число з мінусом забирає токени','adm.disc':'Особиста знижка','adm.discBtn':'Дати знижку','adm.pct':'%','adm.status':'Акаунт','adm.active':'Активний','adm.frozen':'Заморожений','adm.deleted':'Видалений','adm.reason':'Причина (необов’язково)','adm.freeze':'Заморозити','adm.delete':'Видалити (бан)','adm.restore':'Розбанити / відновити','adm.reset':'Скинути ліміти','adm.used':'Витрачено: 5 год — {w}, місяць — {m}','adm.bonus':'Бонуси: {n}','adm.seen':'Останній візит: {d}','adm.saved':'Збережено','adm.confirmDel':'Видалити (забанити) цей акаунт?','adm.code':'Код','adm.gen':'Придумати','adm.type':'Що дає','adm.tTokens':'Бонусні токени','adm.tPlan':'Тариф на N днів','adm.tDisc':'Знижку на тарифи','adm.value':'Скільки','adm.valTok':'токенів','adm.valPct':'відсотків','adm.forPlan':'Тариф','adm.forPlans':'На тарифи','adm.all':'Усі тарифи','adm.pdays':'Днів','adm.max':'Скільки разів можна використати (0 = без обмежень)','adm.exp':'Діє до (порожньо = безстроково)','adm.note':'Нотатка для себе','adm.create':'Створити код','adm.none':'Кодів поки немає','adm.uses':'використано {u}{m}','adm.expd':'до {d}','adm.del':'Видалити','adm.saleHint':'Акція знижує ціни тарифів для всіх і показує плашку на сайті.','adm.salePct':'Знижка, %','adm.saleUntil':'Закінчиться (порожньо = поки не вимкнете)','adm.saleText':'Текст плашки ({l})','adm.saleSave':'Запустити / оновити акцію','adm.saleOff':'Вимкнути акцію','adm.saleOn':'Акція триває: −{p}%','adm.saleNone':'Зараз акції немає','set.admin':'Адмін-панель','blk.frozen':'Акаунт заморожено','blk.deleted':'Акаунт видалено','blk.fs':'заморожено','blk.ds':'видалено','blk.text':'Ваш акаунт «{name}» {state}. Якщо ви вважаєте, що це помилка, напишіть у підтримку:','blk.reason':'Причина: {r}','blk.mail':'Написати в підтримку','blk.copy':'Скопіювати адресу','blk.copied':'Адресу скопійовано','blk.out':'Вийти','sale.def':'Акція: −{p}% на тарифи','sale.until':'до {d}','promo.disc':'Готово! −{p}% на тарифи на {days} дн.','promo.nostore':'Промокоди запрацюють після підключення бази (Upstash у Vercel → Storage)','promo.out':'Цей код уже закінчився','promo.expired':'Термін дії коду минув','disc.badge':'−{p}%','hist.emptyT':'Поки немає розмов','hist.emptyS':'Тут зберігатимуться ваші чати, щоб до них можна було повернутися.',
+ 'chat.toBottom':'До останнього повідомлення','chat.editing':'Редагування повідомлення','chat.copy':'Копіювати','chat.edit':'Змінити','chat.regen':'Відповісти знову','hist.today':'Сьогодні','hist.earlier':'Раніше','hist.del':'Видалити','v.nomail':'На сервері ще не налаштовано надсилання кодів (BREVO_API_KEY і MAIL_FROM у Vercel).','v.nostore':'На сервері ще не підключено базу (Upstash у Vercel → Storage).','v.server':'Помилка сервера: {e}','v.k':'Майже готово','v.t':'Перевірте пошту','v.lead':'Ми надіслали 6-значний код на {email}. Введіть його нижче, щоб підтвердити акаунт.','v.btn':'Підтвердити','v.resend':'Надіслати код ще раз','v.resendIn':'Надіслати знову через {t}','v.bad':'Невірний код. Залишилось спроб: {n}','v.short':'Введіть усі 6 цифр','v.expired':'Код застарів — надішліть новий','v.attempts':'Забагато спроб — надішліть новий код','v.hour':'Забагато кодів — спробуйте за годину','v.mailfail':'Не вдалося надіслати лист. Спробуйте трохи пізніше.','v.sent':'Новий код надіслано','v.spam':'Листа немає? Зачекайте хвилину й загляньте в «Спам», «Промоакції» або «Оповіщення» — інколи він потрапляє туди.','v.wrong':'Не та пошта?','v.out':'Вийти','m.err.verify':'Підтвердіть пошту, щоб почати спілкування.','adm.k':'Адмін-панель','adm.t':'Керування','adm.users':'Користувачі','adm.promos':'Промокоды','adm.sale':'Акція','adm.count':'Акаунтів: {n}','adm.find':'Знайти за поштою','adm.findBtn':'Знайти','adm.nouser':'Акаунта з такою поштою ще немає — людина має хоча б раз увійти на сайт.','adm.plan':'Тариф','adm.forever':'назавжди','adm.until':'до {d}','adm.days':'днів (0 = назавжди)','adm.give':'Видати тариф','adm.take':'Забрати підписку','adm.tokens':'Бонусні токени','adm.add':'Нарахувати','adm.tokHint':'число з мінусом забирає токени','adm.disc':'Особиста знижка','adm.discBtn':'Дати знижку','adm.pct':'%','adm.status':'Акаунт','adm.active':'Активний','adm.frozen':'Заморожений','adm.deleted':'Видалений','adm.reason':'Причина (необов’язково)','adm.freeze':'Заморозити','adm.delete':'Видалити (бан)','adm.restore':'Розбанити / відновити','adm.reset':'Скинути ліміти','adm.used':'Витрачено: 5 год — {w}, місяць — {m}','adm.bonus':'Бонуси: {n}','adm.seen':'Останній візит: {d}','adm.saved':'Збережено','adm.confirmDel':'Видалити (забанити) цей акаунт?','adm.code':'Код','adm.gen':'Придумати','adm.type':'Що дає','adm.tTokens':'Бонусні токени','adm.tPlan':'Тариф на N днів','adm.tDisc':'Знижку на тарифи','adm.value':'Скільки','adm.valTok':'токенів','adm.valPct':'відсотків','adm.forPlan':'Тариф','adm.forPlans':'На тарифи','adm.all':'Усі тарифи','adm.pdays':'Днів','adm.max':'Скільки разів можна використати (0 = без обмежень)','adm.exp':'Діє до (порожньо = безстроково)','adm.note':'Нотатка для себе','adm.create':'Створити код','adm.none':'Кодів поки немає','adm.uses':'використано {u}{m}','adm.expd':'до {d}','adm.del':'Видалити','adm.saleHint':'Акція знижує ціни тарифів для всіх і показує плашку на сайті.','adm.salePct':'Знижка, %','adm.saleUntil':'Закінчиться (порожньо = поки не вимкнете)','adm.saleText':'Текст плашки ({l})','adm.saleSave':'Запустити / оновити акцію','adm.saleOff':'Вимкнути акцію','adm.saleOn':'Акція триває: −{p}%','adm.saleNone':'Зараз акції немає','set.admin':'Адмін-панель','blk.frozen':'Акаунт заморожено','blk.deleted':'Акаунт видалено','blk.fs':'заморожено','blk.ds':'видалено','blk.text':'Ваш акаунт «{name}» {state}. Якщо ви вважаєте, що це помилка, напишіть у підтримку:','blk.reason':'Причина: {r}','blk.mail':'Написати в підтримку','blk.copy':'Скопіювати адресу','blk.copied':'Адресу скопійовано','blk.out':'Вийти','sale.def':'Акція: −{p}% на тарифи','sale.until':'до {d}','promo.disc':'Готово! −{p}% на тарифи на {days} дн.','promo.nostore':'Промокоди запрацюють після підключення бази (Upstash у Vercel → Storage)','promo.out':'Цей код уже закінчився','promo.expired':'Термін дії коду минув','disc.badge':'−{p}%','m.images':'Зображення','m.lock':'Orbit+','m.premiumT':'Ця модель доступна на тарифах Orbit і вище','m.err.premium':'Ця модель доступна на платних тарифах (Orbit і вище). Оберіть іншу модель або змініть тариф.','img.dl':'Завантажити','img.gen':'Малюю…','att.big':'Файл більший за {n} МБ — це ліміт вашого тарифу','att.type':'Такий тип файлу поки не підтримується: можна зображення й текстові файли (txt, md, код, csv, json)','att.many':'Не більше 6 вкладень в одному повідомленні','att.heavy':'Вкладення надто важкі для одного повідомлення','att.file':'Файл','proj.saved':'Збережено в «Проєкти»','proj.open':'Відкрити','proj.versions':'Версій: {n}','proj.preview':'Превью','proj.code':'Код','proj.openTab':'Відкрити в новій вкладці','proj.download':'Завантажити','proj.copy':'Копіювати код','proj.toChat':'Перейти в чат','proj.del':'Видалити проєкт','proj.delQ':'Видалити цей проєкт?','proj.version':'Версія {n}','proj.noPrev':'Превʼю немає — відкрийте вкладку «Код»','pt.site':'Сайт','pt.code':'Код','pt.game':'Гра','pt.slides':'Презентація','adm.models':'Моделі','adm.mHint':'Платні моделі працюють лише на тарифах Orbit і вище. Натисніть на модель, щоб перемкнути.','adm.free':'Безкоштовна','adm.premium':'Платна','adm.def':'за замовчуванням','hist.emptyT':'Поки немає розмов','hist.emptyS':'Тут зберігатимуться ваші чати, щоб до них можна було повернутися.',
  'proj.kicker':'Усього проєктів','proj.title':'Проєкти','proj.lead':'Кожна генерація і кожна правка зберігаються окремою версією — повернутися можна завжди.','proj.newSite':'Новий сайт','proj.slides':'Презентація',
  'proj.tabs':['Усі','Сайти','Код','Презентації','Ігри'],'proj.search':'Пошук за назвою чи описом','proj.count':'Проєктів:','proj.sort':'Спершу оновлені',
  'proj.emptyT':'Тут з’явиться ваш перший проєкт','proj.emptyS':'Створіть сайт, презентацію, програму або гру. Усі збережені версії залишаться тут.','proj.emptyBtn':'Створити проєкт',
@@ -1621,6 +1703,8 @@ const state = {
   themePref: store.get('theme', 'system'),
   currency: store.get('cur', null),
   mode: 'chat',
+  att: { home: [], chat: [] },
+  pendingKind: null,
   model: store.get('model', null),
   speed: ({ fast:'fast', deep:'deep' })[store.get('speed', null)] || 'auto',
   convMode: 'chat',
@@ -1865,6 +1949,7 @@ function show(){
     setSeg($('#ptabs'), 'data-tab', tab);
   }
   if (route.page === 'section') renderSection(route.sub);
+  if (route.page === 'projects'){ renderProjects(); syncProjs(); }
   if (el === 'auth') renderAuth();
   if (el === 'verify') renderVerify();
   if (el === 'admin') adminOpen();
@@ -1918,7 +2003,7 @@ function setUser(u){
   if (u) store.set('user', JSON.stringify(u)); else store.del('user');
   USER.name = u ? u.name : ''; USER.email = u ? u.email : '';
   refreshUser();
-  if (u){ loadModels(); refreshUsage(300); setTimeout(claimRef, 1500); syncConvs(); pullPrefs(); }
+  if (u){ loadModels(); refreshUsage(300); setTimeout(claimRef, 1500); syncConvs(); pullPrefs(); syncProjs(); }
   if (state.chatReady){ state.messages = []; state.chatId = null; if (u) restoreChat(); else renderMsgs(); }
 }
 function refreshUser(){
@@ -2035,7 +2120,7 @@ async function resetPassword(){
 }
 async function signOutNow(){
   state.needVerify = false; store.del('nv'); state.codeSent = 0; store.del('prefsAt');
-  USER.admin = false; store.del('adm'); USER.sale = USER.disc = null; setBlocked(null); $('#setAdminRow').hidden = true; AD.card = null;
+  USER.admin = false; store.del('adm'); store.del('usage'); USER.sale = USER.disc = null; setBlocked(null); $('#setAdminRow').hidden = true; AD.card = null;
   try { if (await fbOk()) await FB.m.signOut(FB.auth); } catch(e){}
   setUser(null); go('#/welcome', true);
 }
@@ -2054,13 +2139,14 @@ function autosize(ta, min){
   ta.style.height = 'auto';
   ta.style.height = Math.max(min, Math.min(ta.scrollHeight, 220)) + 'px';
 }
-function bindComposer(ta, btn, min, onSend){
-  const upd = () => { btn.disabled = !ta.value.trim() && !btn.classList.contains('stop'); autosize(ta, min); };
+function bindComposer(ta, btn, min, onSend, key){
+  const upd = () => { btn.disabled = !ta.value.trim() && !(key && state.att[key].length) && !btn.classList.contains('stop'); autosize(ta, min); };
+  if (key) ta._upd = upd;
   ta.addEventListener('input', upd);
   ta.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && window.matchMedia('(hover:hover)').matches){ e.preventDefault(); btn.click(); }
   });
-  btn.addEventListener('click', () => { if (btn.classList.contains('stop')){ if (chatAbort) chatAbort.abort(); return; } if (chatAbort) return; const v = ta.value.trim(); if (!v) return; ta.value=''; upd(); onSend(v); });
+  btn.addEventListener('click', () => { if (btn.classList.contains('stop')){ if (chatAbort) chatAbort.abort(); return; } if (chatAbort) return; const v = ta.value.trim(); if (!v && !(key && state.att[key].length)) return; ta.value=''; upd(); onSend(v); });
   return upd;
 }
 function setMode(m){
@@ -2092,7 +2178,7 @@ const AI = (() => {
     if (!r.ok) await fail(r);
     const j = await r.json();
     const arr = Array.isArray(j) ? j : (j.data || j.models || []);
-    return arr.map(m => typeof m === 'string' ? m : (m && (m.id || m.name))).filter(Boolean);
+    return arr.map(m => typeof m === 'string' ? { id: m } : (m && (m.id || m.name) ? { id: m.id || m.name, premium: m.premium, image: m.image } : null)).filter(Boolean);
   }
   async function get(p){ const r = await fetch(url(p), { headers: await hdr(), cache: 'no-store' }); if (!r.ok) await fail(r); return r.json(); }
   async function usage(){ const r = await fetch(url('usage') + '&n=' + encodeURIComponent(USER.name || ''), { headers: await hdr(), cache: 'no-store' }); if (!r.ok) await fail(r); return r.json(); }
@@ -2129,7 +2215,21 @@ const AI = (() => {
 const TIER_RANK = { mythos:0, fable:1, opus:2, sonnet:3, haiku:4, '':5 };
 const FALLBACK_MODELS = ['claude-opus-5-5', 'claude-opus-5'];
 const cap = w => w ? w[0].toUpperCase() + w.slice(1) : '';
+const IMG_RE = /(gpt-image|dall-e-3|imagen|flux|recraft|ideogram|seedream|nano-banana|image-preview|-image-|stable-diffusion|sdxl|midjourney)/;
+function parseImageModel(id){
+  const bare = String(id).toLowerCase().split('/').pop();
+  if (!IMG_RE.test(bare) || /dall-e-2/.test(bare)) return null;
+  const clean = bare.replace(/[-_]?\d{4}[-_]?\d{2}[-_]?\d{2}$/, '').replace(/[-_]?(latest|preview)$/, '');
+  let name;
+  if (/^gpt-image/.test(clean)) name = 'GPT Image ' + clean.replace(/^gpt-image-?/, '').replace(/-/g, ' ');
+  else if (/^dall-e-3/.test(clean)) name = 'DALL·E 3';
+  else name = clean.split(/[-_]/).map(w => /^\d/.test(w) ? w : cap(w)).join(' ');
+  const v = parseFloat((clean.match(/\d+(\.\d+)?/) || ['0'])[0]) || 0;
+  return { id, fam:'img', prov: /gpt-image|dall-e/.test(clean) ? 'gpt' : 'other', name: name.trim(), v: v * 10, tier: 5 };
+}
+const PREMIUM_RE = /opus|mythos|fable|(^|[-_.])pro($|[-_.])/i;
 function parseModel(id){
+  const im = parseImageModel(id); if (im) return im;
   const low = String(id).toLowerCase(), bare = low.split('/').pop();
   if (/(embed|tts|whisper|audio|realtime|transcri|image|dall-?e|moderation|instruct)/.test(bare)) return null;
   let m = bare.match(/claude[-_ ]?(?:(opus|sonnet|haiku|fable|mythos)[-_ ]?)?(\d{1,2})(?:[-._](\d)(?!\d))?(?:[-_ ]?(opus|sonnet|haiku|fable|mythos))?/);
@@ -2149,11 +2249,21 @@ function parseModel(id){
   }
   return null;
 }
-function pickModels(ids){
-  const byName = new Map();
-  ids.map(parseModel).filter(Boolean).forEach(m => { const o = byName.get(m.name); if (!o || m.id.length < o.id.length) byName.set(m.name, m); });
-  return [...byName.values()].sort((a, b) => (a.fam === b.fam ? 0 : a.fam === 'claude' ? -1 : 1) || b.v - a.v || a.tier - b.tier || a.name.localeCompare(b.name));
+const FAM_ORDER = { claude: 0, gpt: 1, img: 2 };
+function pickModels(items){
+  const byName = new Map(), imgs = [];
+  items.map(x => typeof x === 'string' ? { id: x } : x).forEach(x => {
+    const m = parseModel(x.id); if (!m) return;
+    if (m.fam === 'img'){ imgs.push(m); return; }
+    m.premium = x.premium === true;
+    const o = byName.get(m.name); if (!o || m.id.length < o.id.length) byName.set(m.name, m);
+  });
+  // the newest GPT Image model (or another image model) draws pictures when a GPT model is asked to
+  imgs.sort((a, b) => (a.prov === 'gpt' ? 0 : 1) - (b.prov === 'gpt' ? 0 : 1) || b.v - a.v);
+  if (imgs.length) MODELS.imageId = imgs[0].id;
+  return [...byName.values()].sort((a, b) => (FAM_ORDER[a.fam] - FAM_ORDER[b.fam]) || b.v - a.v || a.tier - b.tier || a.name.localeCompare(b.name));
 }
+const isLocked = m => !!(m && m.premium && (USER.plan || 'spark') === 'spark' && !USER.admin);
 const MODELS = { list: null, failed: false, loading: null, err: '' };
 const errText = e => !e ? '' : (e.status ? 'HTTP ' + e.status + (e.message ? ': ' + e.message : '') : (e.message || String(e)));
 // The model list is kept in this browser, so it shows instantly; a fresh copy is fetched quietly in the background.
@@ -2169,7 +2279,7 @@ function loadModels(force){
   if (!force && MODELS.fresh) return Promise.resolve(MODELS.list);
   MODELS.loading = AI.models().then(ids => {
     const l = pickModels(ids);
-    if (l.length){ MODELS.list = l; MODELS.failed = false; MODELS.err = ''; MODELS.fresh = true; store.set('models', JSON.stringify({ at: Date.now(), ids: l.map(m => m.id) })); }
+    if (l.length){ MODELS.list = l; MODELS.failed = false; MODELS.err = ''; MODELS.fresh = true; store.set('models', JSON.stringify({ at: Date.now(), ids: l.map(m => ({ id: m.id, premium: m.premium })).concat(MODELS.imageId ? [{ id: MODELS.imageId }] : []) })); }
     else if (!MODELS.cachedAt){ MODELS.failed = true; MODELS.err = ''; }
   }).catch(e => { if (!MODELS.cachedAt){ MODELS.failed = true; MODELS.err = errText(e); } })
     .then(() => { MODELS.loading = null; ensureModel(); renderModelList(); renderModelChip(); return MODELS.list; });
@@ -2181,15 +2291,24 @@ function curModel(){
 }
 function ensureModel(){
   const l = MODELS.list || [];
-  if (!state.model || (!MODELS.failed && !l.some(m => m.id === state.model))){ if (l[0]){ state.model = l[0].id; store.set('model', state.model); } }
+  const cur = l.find(m => m.id === state.model);
+  if (!state.model || (!MODELS.failed && !cur) || (cur && isLocked(cur))){
+    const pick = l.find(m => m.fam !== 'img' && !isLocked(m)) || l[0];
+    if (pick){ state.model = pick.id; store.set('model', state.model); renderModelChip(); }
+  }
 }
 const LOGOS = { claude: 'data:image/webp;base64,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', gpt: 'data:image/webp;base64,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' };
-const logoSvg = (fam, cls) => `<img class="lg ${cls || ''}" src="${LOGOS[fam === 'gpt' ? 'gpt' : 'claude']}" alt="" draggable="false">`;
+const IMG_ICON = '<svg class="lg" viewBox="0 0 40 40"><defs><linearGradient id="imgG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd2b0"/><stop offset=".55" stop-color="#f2a8c4"/><stop offset="1" stop-color="#9a8cff"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#imgG)"/><path d="M9 28l7-8 5 5 4-4 6 7z" fill="#fff" opacity=".92"/><circle cx="26" cy="14" r="3.4" fill="#fff"/></svg>';
+const logoSvg = (x, cls) => {
+  const fam = typeof x === 'string' ? x : (x && x.fam), prov = x && typeof x === 'object' ? x.prov : '';
+  if (fam === 'img' && prov !== 'gpt') return IMG_ICON;
+  return `<img class="lg ${cls || ''}" src="${LOGOS[fam === 'gpt' || prov === 'gpt' ? 'gpt' : 'claude']}" alt="" draggable="false">`;
+};
 const PLANET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="10" ry="3.6" transform="rotate(-20 12 12)"/></svg>';
 function renderModelChip(){
   const m = curModel();
   $$('.mchip').forEach(c => {
-    $('.mchip-ico', c).innerHTML = m ? logoSvg(m.fam) : PLANET;
+    $('.mchip-ico', c).innerHTML = m ? logoSvg(m) : PLANET;
     $('.mname', c).textContent = m ? m.name : t('home.model');
     c.classList.toggle('on', !!m);
   });
@@ -2201,9 +2320,12 @@ function renderModelList(){
   const l = MODELS.list.filter(m => !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
   const ck = '<span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>';
   let h = MODELS.failed ? `<div class="mstat">${esc(t('m.fail'))}<button type="button" id="modelRetry">${esc(t('m.retry'))}</button></div>` : '';
-  [['claude', 'Claude', t('m.anth')], ['gpt', 'ChatGPT', t('m.oai')]].forEach(([fam, title, org]) => {
+  [['claude', 'Claude', t('m.anth')], ['gpt', 'ChatGPT', t('m.oai')], ['img', t('m.images'), '']].forEach(([fam, title, org]) => {
     const g = l.filter(m => m.fam === fam); if (!g.length) return;
-    h += `<div class="mgroup">${esc(title)}</div>` + g.map(m => `<button type="button" class="mi${m.id === state.model ? ' sel' : ''}" data-model="${esc(m.id)}"><span class="mlogo">${logoSvg(fam)}</span><span class="mt"><b>${esc(m.name)}</b><small>${esc(org)}</small></span>${ck}</button>`).join('');
+    h += `<div class="mgroup">${esc(title)}</div>` + g.map(m => {
+      const lock = isLocked(m), sub = org || (m.prov === 'gpt' ? t('m.oai') : t('m.images'));
+      return `<button type="button" class="mi${m.id === state.model ? ' sel' : ''}${lock ? ' locked' : ''}" data-model="${esc(m.id)}"${lock ? ' data-locked="1"' : ''}><span class="mlogo">${logoSvg(m)}</span><span class="mt"><b>${esc(m.name)}</b><small>${esc(sub)}</small></span>${lock ? `<span class="mlock">${esc(t('m.lock'))}</span>` : ck}</button>`;
+    }).join('');
   });
   if (!l.length) h += `<div class="mstat">${esc(t('m.none'))}</div>`;
   box.innerHTML = h;
@@ -2374,8 +2496,250 @@ async function pullPrefs(){
     store.set('prefsAt', String(r.updated));
   } catch(e){} finally { prefsApplying = false; }
 }
-function syncAll(){ if (!state.user) return; pullPrefs(); syncConvs(); refreshUsage(0); }
+function syncAll(){ if (!state.user) return; pullPrefs(); syncConvs(); syncProjs(); refreshUsage(0); }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncAll(); });
+
+/* ---------- attachments ---------- */
+const TEXT_EXT = /\.(txt|md|markdown|csv|tsv|json|xml|ya?ml|html?|css|m?js|tsx?|jsx|py|java|kt|swift|c|h|cpp|cs|go|rs|php|rb|sql|sh|bat|ini|toml|log|vue|svelte)$/i;
+const ATTACH_MB_C = { spark: 25, orbit: 100, nova: 250, cosmos: 500 };
+let attTarget = 'home';
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+function imgTo(img, max, q){
+  const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', q);
+}
+async function addFiles(files){
+  const list = state.att[attTarget], lim = USER.attachMB || ATTACH_MB_C[USER.plan] || 25;
+  for (const f of files){
+    if (list.length >= 6){ toast(t('att.many')); break; }
+    if (f.size > lim * 1048576){ toast(t('att.big', { n: lim })); continue; }
+    try {
+      if (/^image\//.test(f.type)){
+        const url = URL.createObjectURL(f), img = await loadImg(url);
+        const data = imgTo(img, 1600, .85), thumb = imgTo(img, 220, .78);
+        URL.revokeObjectURL(url);
+        const used = list.reduce((n, a) => n + (a.data ? a.data.length : 0), 0);
+        if (used + data.length > 3300000){ toast(t('att.heavy')); continue; }
+        list.push({ kind: 'image', name: f.name || 'image.jpg', size: f.size, data, thumb });
+      } else if (/^text\//.test(f.type) || /json|xml|javascript|csv/.test(f.type) || TEXT_EXT.test(f.name)){
+        let text = await f.text(); if (text.length > 150000) text = text.slice(0, 150000) + '\n…';
+        list.push({ kind: 'file', name: f.name, size: f.size, text });
+      } else toast(t('att.type'));
+    } catch(e){ toast(t('att.type')); }
+  }
+  renderAtt(attTarget);
+}
+function renderAtt(key){
+  const box = $('#att-' + key); if (!box) return;
+  box.innerHTML = state.att[key].map((a, i) => `<div class="att">${a.kind === 'image' ? `<img src="${a.thumb}" alt="">` : `<span class="fi">${esc((a.name.split('.').pop() || t('att.file')).slice(0, 4))}</span>`}<span>${esc(a.name)}</span><button type="button" data-attdel="${key}:${i}" aria-label="Remove">✕</button></div>`).join('');
+  const ta = $(key === 'home' ? '#homeInput' : '#chatInput'); if (ta && ta._upd) ta._upd();
+}
+function takeAtt(key){ const a = state.att[key]; state.att[key] = []; renderAtt(key); return a; }
+function userContent(m, full){
+  let text = m.text || '';
+  const att = full ? (m._parts || []) : [];
+  att.filter(a => a.kind === 'file').forEach(a => { text += `\n\n[${t('att.file')}: ${a.name}]\n\`\`\`\n${a.text}\n\`\`\``; });
+  if (!full && m.att && m.att.length) text += '\n' + m.att.map(a => `[${t('att.file')}: ${a.name}]`).join(' ');
+  const imgs = att.filter(a => a.kind === 'image');
+  if (!imgs.length) return text || ' ';
+  return [{ type: 'text', text: text || ' ' }].concat(imgs.map(a => ({ type: 'image_url', image_url: { url: a.data } })));
+}
+
+/* ---------- image generation ---------- */
+// "draw / generate a picture…" in any of the three languages
+const IMG_ASK = /(нарису|намалю|сгенерир\S*\s+(мне\s+)?(картин|изображ|фото|арт|рисун|логотип|иконк|аватар|обо)|згенеру\S*\s+(мені\s+)?(картин|зображ|фото|арт|малюн|логотип)|(созда|сдела|створи|зроби)\S*\s+(мне\s+|мені\s+)?(картин|изображ|зображ|рисун|малюн|логотип|иконк|аватар|арт)|\bdraw\b|\b(generate|create|make)\s+(me\s+)?(an?\s+)?(image|picture|logo|icon|illustration|drawing|art))/i;
+const wantsImage = q => IMG_ASK.test(q || '');
+async function runImage(model, shownAs){
+  const lastUser = [...state.messages].reverse().find(m => m.role === 'user');
+  const prompt = (lastUser && lastUser.text) || '';
+  const bot = { role:'bot', typing:true, kind:'image', text:'', model: shownAs || model };
+  state.messages.push(bot); appendMsg(bot); scrollChat(true);
+  chatAbort = new AbortController(); setBusy(true);
+  try {
+    const r = await AI.post('image', { model, prompt });
+    bot.images = r.images.map(x => x.url || ('data:image/png;base64,' + x.b64));
+    bot.saved = await Promise.all(bot.images.map(async src => { if (!/^data:/.test(src)) return src; try { return imgTo(await loadImg(src), 900, .82); } catch(e){ return ''; } }));
+  } catch(err){
+    const st = err && err.status;
+    bot.errKey = err && err.code === 'premium' ? 'm.err.premium' : err && err.code === 'limit' ? (err.which === 'w' ? 'm.err.limitW' : 'm.err.limitM') : err && err.code === 'blocked' ? 'blk.frozen' : !st ? 'm.err.net' : 'm.err.other';
+    bot.errDetail = err && err.code === 'limit' ? fmtWhen(err.resetAt, err.which === 'm') : (err && err.message) || ('HTTP ' + st);
+    bot.el.classList.add('err');
+  } finally {
+    bot.typing = false; bot.el.classList.remove('busy');
+    $('.body', bot.el).innerHTML = msgBody(bot); scrollChat(false);
+    chatAbort = null; setBusy(false);
+    saveCurrent(); updToBottom(); refreshUsage(600);
+  }
+}
+
+/* ---------- projects: every generated site / program / game is saved with its versions ---------- */
+const PT_ICON = {
+  site: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>',
+  code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>',
+  game: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7.5 11v3M6 12.5h3M15.5 12h.01M18 13.5h.01"/></svg>',
+  slides: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg>'
+};
+const PT_TABS = [null, 'site', 'code', 'slides', 'game'];
+const projKey = () => 'projs:' + (USER.email || 'guest');
+function loadProjs(){ try { return JSON.parse(store.get(projKey(), '[]')) || []; } catch(e){ return []; } }
+function saveProjs(list){
+  let l = list.slice(0, 60);
+  for (let k = 0; k < 4; k++){ try { store.set(projKey(), JSON.stringify(l)); return; } catch(e){ l = l.map((p, i) => i > 10 && p.versions ? Object.assign({}, p, { versions: undefined }) : p); } }
+}
+function codeBlocks(text){
+  const parts = String(text || '').split('```'), out = [];
+  for (let i = 1; i < parts.length - 1; i += 2){
+    const p = parts[i], nl = p.indexOf('\n');
+    const lang = (nl >= 0 ? p.slice(0, nl).trim() : '').toLowerCase(), code = (nl >= 0 ? p.slice(nl + 1) : p).replace(/\n$/, '');
+    if (code.trim().length > 15) out.push({ lang, code: code.slice(0, 160000) });
+  }
+  return out.slice(0, 8);
+}
+const isHtml = b => /^html?$/.test(b.lang) || /^\s*(<!doctype html|<html)/i.test(b.code);
+const mainHtml = v => { const b = v && v.files && v.files.find(isHtml); return b ? b.code : ''; };
+function projectFromAnswer(bot){
+  const blocks = codeBlocks(bot.text); if (!blocks.length || !state.chatId) return;
+  const html = blocks.find(isHtml);
+  let type = state.convKind;
+  if (!type){ if (html && /<body|<html/i.test(html.code)) type = 'site'; else return; }
+  const q = ((state.messages.find(m => m.role === 'user') || {}).text || '').toLowerCase();
+  if (type === 'site' && /игр|гру|game/.test(q)) type = 'game';
+  if (type === 'code' && html && /игр|гру|game/.test(q)) type = 'game';
+  const id = 'p' + state.chatId, list = loadProjs(), conv = loadConvs().find(c => c.id === state.chatId);
+  let p = list.find(x => x.id === id);
+  if (!p){ p = { id, type, title: (conv && conv.title) || t('pt.' + type), conv: state.chatId, created: Date.now(), versions: [] }; list.unshift(p); }
+  p.versions = (p.versions || []).concat([{ at: Date.now(), files: blocks }]).slice(-6);
+  p.updated = Date.now(); p.n = p.versions.length; p.type = type;
+  list.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  saveProjs(list);
+  bot.proj = id; $('.body', bot.el).innerHTML = msgBody(bot); saveCurrent();
+  pushProj(id);
+  renderProjects();
+}
+const projTimers = {};
+function pushProj(id){
+  if (!state.user) return;
+  clearTimeout(projTimers[id]);
+  projTimers[id] = setTimeout(() => { const p = loadProjs().find(x => x.id === id); if (p && p.versions) AI.post('proj-save', p).catch(() => {}); }, 1000);
+}
+let projSyncing = null;
+function syncProjs(){
+  if (!state.user) return Promise.resolve();
+  if (projSyncing) return projSyncing;
+  projSyncing = AI.get('projs').then(async r => {
+    const list = loadProjs(), remote = r.list || [], ids = new Set(remote.map(x => x.id));
+    remote.forEach(m => { const i = list.findIndex(x => x.id === m.id); if (i < 0) list.push(Object.assign({}, m)); else if ((m.updated || 0) > (list[i].updated || 0)) list[i] = Object.assign({}, m); });
+    list.filter(p => !ids.has(p.id) && p.versions).forEach(p => pushProj(p.id));
+    list.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+    saveProjs(list); renderProjects();
+    const missing = list.filter(p => !p.versions).slice(0, 8);
+    for (const p of missing){ await fullProj(p.id); }
+    if (missing.length) renderProjects();
+  }).catch(() => {}).finally(() => { projSyncing = null; });
+  return projSyncing;
+}
+async function fullProj(id){
+  let p = loadProjs().find(x => x.id === id);
+  if (p && p.versions) return p;
+  try {
+    const r = await AI.get('proj&id=' + encodeURIComponent(id));
+    const list = loadProjs(), i = list.findIndex(x => x.id === id);
+    if (i >= 0) list[i] = Object.assign(list[i], r); else list.unshift(r);
+    saveProjs(list); return list.find(x => x.id === id);
+  } catch(e){ return p || null; }
+}
+function renderProjects(){
+  const all = loadProjs();
+  const on = $('#projTabs button.on'), type = PT_TABS[on ? +on.dataset.i : 0];
+  const q = ($('#projSearch').value || '').trim().toLowerCase();
+  const list = all.filter(p => (!type || p.type === type) && (!q || (p.title || '').toLowerCase().includes(q)));
+  $('#projTotal').textContent = all.length; $('#projCount').textContent = list.length;
+  $('#projEmpty').style.display = all.length ? 'none' : '';
+  $('#projGrid').innerHTML = list.map((p, i) => {
+    const v = p.versions && p.versions[p.versions.length - 1], html = mainHtml(v);
+    let shot;
+    if (html && i < 12) shot = `<iframe sandbox="allow-scripts" loading="lazy" tabindex="-1" aria-hidden="true" srcdoc="${esc(html)}"></iframe>`;
+    else if (v && v.files[0]) shot = `<pre>${esc(v.files[0].code.split('\n').slice(0, 40).join('\n'))}</pre>`;
+    else shot = `<div class="ph">${PT_ICON[p.type] || PT_ICON.code}</div>`;
+    return `<button type="button" class="pj" data-proj="${esc(p.id)}"><div class="pj-shot">${shot}</div><div class="pj-info"><div><b>${esc(p.title || t('pt.' + p.type))}</b><small>${esc(t('pt.' + p.type))} · ${esc(fmtWhen(p.updated, true))}</small></div><span class="pj-ico">${PT_ICON[p.type] || PT_ICON.code}</span></div></button>`;
+  }).join('');
+}
+const PV = { id: null, ver: 0, tab: 'preview' };
+async function openProject(id){
+  const p = await fullProj(id); if (!p || !p.versions || !p.versions.length) return;
+  PV.id = id; PV.ver = p.versions.length - 1;
+  PV.tab = mainHtml(p.versions[PV.ver]) ? 'preview' : 'code';
+  $('#pvIco').innerHTML = PT_ICON[p.type] || PT_ICON.code;
+  $('#pvTitle').textContent = p.title || t('pt.' + p.type);
+  $('#pvMeta').textContent = t('pt.' + p.type) + ' · ' + t('proj.versions', { n: p.versions.length });
+  $('#pvVer').innerHTML = p.versions.map((v, i) => `<option value="${i}"${i === PV.ver ? ' selected' : ''}>${esc(t('proj.version', { n: i + 1 }))} · ${esc(fmtWhen(v.at, true))}</option>`).join('');
+  $('#pvVer').style.display = p.versions.length > 1 ? '' : 'none';
+  openSheet('sheet-proj');
+  renderPV();
+}
+function curPV(){ const p = loadProjs().find(x => x.id === PV.id); return { p, v: p && p.versions && p.versions[PV.ver] }; }
+function renderPV(){
+  const { v } = curPV(); if (!v) return;
+  const html = mainHtml(v);
+  $('#pvSeg').style.display = html ? '' : 'none';
+  setSeg($('#pvSeg'), 'data-pv', PV.tab);
+  if (PV.tab === 'preview' && html){
+    $('#pvBody').innerHTML = `<div class="pv-phone"><iframe sandbox="allow-scripts allow-forms allow-modals allow-popups" title="Preview"></iframe></div>`;
+    $('#pvBody iframe').srcdoc = html;
+  } else {
+    $('#pvBody').innerHTML = `<div class="pv-code msg">${v.files.map(b => `<div class="code"><div class="code-h"><span>${esc(b.lang || 'code')}</span><button type="button" data-copy>${esc(t('m.copy'))}</button></div><pre><code>${esc(b.code)}</code></pre></div>`).join('')}</div>`;
+  }
+  $('#pvOpen').style.display = html ? '' : 'none';
+}
+const EXT = { html:'html', htm:'html', css:'css', js:'js', javascript:'js', ts:'ts', typescript:'ts', python:'py', py:'py', json:'json', java:'java', kotlin:'kt', swift:'swift', c:'c', cpp:'cpp', 'c++':'cpp', csharp:'cs', cs:'cs', go:'go', rust:'rs', php:'php', ruby:'rb', sql:'sql', bash:'sh', sh:'sh', shell:'sh', yaml:'yml', yml:'yml', jsx:'jsx', tsx:'tsx', vue:'vue', md:'md', markdown:'md' };
+function downloadText(name, text, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' }));
+  a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function bindProjects(){
+  $('#projGrid').addEventListener('click', e => { const b = e.target.closest('[data-proj]'); if (b) openProject(b.dataset.proj); });
+  $('#projSearch').addEventListener('input', renderProjects);
+  $('#projTabs').addEventListener('click', () => setTimeout(renderProjects, 0));
+  $('#msgs').addEventListener('click', e => { const b = e.target.closest('[data-openproj]'); if (b){ e.stopPropagation(); openProject(b.dataset.openproj); } }, true);
+  $('#pvSeg').addEventListener('click', e => { const b = e.target.closest('[data-pv]'); if (b){ PV.tab = b.dataset.pv; renderPV(); } });
+  $('#pvVer').addEventListener('change', () => { PV.ver = +$('#pvVer').value; renderPV(); });
+  $('#pvBody').addEventListener('click', e => { const b = e.target.closest('[data-copy]'); if (b) copyRaw($('code', b.closest('.code')).textContent, () => { b.textContent = t('m.copied'); setTimeout(() => { b.textContent = t('m.copy'); }, 1300); }); });
+  $('#pvOpen').addEventListener('click', () => { const { v } = curPV(), html = mainHtml(v); if (html) window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank'); });
+  $('#pvDl').addEventListener('click', () => {
+    const { p, v } = curPV(); if (!v) return;
+    const base = (p.title || 'mundora').replace(/[^\wА-Яа-яЁёІіЇїЄє -]+/g, '').trim().replace(/\s+/g, '-').slice(0, 40) || 'mundora';
+    const html = mainHtml(v);
+    if (html) return downloadText(base + '.html', html, 'text/html');
+    v.files.forEach((b, i) => downloadText(base + (v.files.length > 1 ? '-' + (i + 1) : '') + '.' + (EXT[b.lang] || 'txt'), b.code));
+  });
+  $('#pvCopy').addEventListener('click', () => { const { v } = curPV(); if (v) copyRaw(mainHtml(v) || v.files.map(b => b.code).join('\n\n'), () => toast(t('m.copied'))); });
+  $('#pvChat').addEventListener('click', () => { const { p } = curPV(); if (p && p.conv) openConv(p.conv); });
+  $('#pvDel').addEventListener('click', () => {
+    if (!confirm(t('proj.delQ'))) return;
+    const id = PV.id; saveProjs(loadProjs().filter(x => x.id !== id)); AI.post('proj-del', { id }).catch(() => {});
+    closeSheet(); renderProjects();
+  });
+  // attachments
+  document.addEventListener('click', e => {
+    const a = e.target.closest('[data-attach]'); if (a){ attTarget = a.dataset.attach; $('#fileIn').click(); return; }
+    const d = e.target.closest('[data-attdel]'); if (d){ const [k, i] = d.dataset.attdel.split(':'); state.att[k].splice(+i, 1); renderAtt(k); }
+  });
+  $('#fileIn').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) addFiles(f); });
+  // paste images straight into the message field
+  ['home', 'chat'].forEach(k => $(k === 'home' ? '#homeInput' : '#chatInput').addEventListener('paste', e => {
+    const files = [...((e.clipboardData && e.clipboardData.files) || [])]; if (files.length){ e.preventDefault(); attTarget = k; addFiles(files); }
+  }));
+}
+
+/* ---------- admin: which models are paid ---------- */
+async function adminModels(){
+  try {
+    const r = await AI.get('admin-models');
+    $('#amList').innerHTML = (r.list || []).filter(x => parseModel(x.id)).map(x => { const m = parseModel(x.id); return `<button type="button" class="am" data-am="${esc(x.id)}" data-prem="${x.premium ? 1 : 0}"><span class="mlogo" style="width:38px;height:38px">${logoSvg(m)}</span><span class="mt"><b>${esc(m.name)}</b><small>${esc(x.id)}${x.custom ? '' : ' · ' + esc(t('adm.def'))}</small></span><span class="tag ${x.premium ? 'pr' : 'fr'}">${esc(t(x.premium ? 'adm.premium' : 'adm.free'))}</span></button>`; }).join('') || `<p class="adm-hint">—</p>`;
+  } catch(e){ $('#amList').innerHTML = `<p class="adm-msg bad">${esc(errText(e))}</p>`; }
+}
 
 /* ---------- sales and discounts ---------- */
 const SUPPORT = 'mundoraaiapp@gmail.com';
@@ -2423,6 +2787,7 @@ function adminTab(tab){
   setSeg($('#admSeg'), 'data-atab', tab);
   if (tab === 'promos') adminPromos();
   if (tab === 'sale') adminSale();
+  if (tab === 'models') adminModels();
 }
 function adminOpen(){
   ['ru', 'en', 'uk'].forEach(l => { $('#slT' + cap(l)).textContent = t('adm.saleText', { l: l.toUpperCase() }); });
@@ -2471,8 +2836,10 @@ async function adminAct(kind){
   else if (kind === 'disc'){ body.action = 'disc'; body.percent = +$('#auPct').value || 0; body.days = +$('#auDiscDays').value || 30; }
   else if (kind === 'delete'){ if (!confirm(t('adm.confirmDel'))) return; body.action = 'delete'; body.reason = $('#auReason').value.trim(); }
   else { body.action = kind; body.reason = $('#auReason').value.trim(); }
+  $$('#admUser [data-ua]').forEach(b => { b.disabled = true; b.style.opacity = '.55'; });
+  admMsg('#auMsg', '!…');
   try { AD.card = await AI.post('admin-act', body); renderAdminUser(AD.card); admMsg('#auMsg', 'adm.saved', null, 'ok'); if (c.uid === (FB.auth && FB.auth.currentUser && FB.auth.currentUser.uid)) refreshUsage(0); }
-  catch(e){ admMsg('#auMsg', '!' + errText(e), null, 'bad'); }
+  catch(e){ admMsg('#auMsg', '!' + errText(e), null, 'bad'); $$('#admUser [data-ua]').forEach(b => { b.disabled = false; b.style.opacity = ''; }); }
 }
 function pcTypeUI(){
   const ty = $('#pcType').value;
@@ -2525,6 +2892,13 @@ function bindAdmin(){
     const d = e.target.closest('[data-pcdel]'); if (d){ try { await AI.post('admin-promo-del', { code: d.dataset.pcdel }); adminPromos(); } catch(err){} return; }
     const c = e.target.closest('[data-pccopy]'); if (c) copyText(c.dataset.pccopy, c);
   });
+  $('#amList').addEventListener('click', async e => {
+    const b = e.target.closest('[data-am]'); if (!b || b.disabled) return;
+    b.disabled = true; const tag = $('.tag', b), prem = b.dataset.prem !== '1';
+    tag.className = 'tag ' + (prem ? 'pr' : 'fr'); tag.textContent = t(prem ? 'adm.premium' : 'adm.free');
+    try { await AI.post('admin-models', { id: b.dataset.am, premium: prem }); b.dataset.prem = prem ? '1' : '0'; MODELS.fresh = false; loadModels(true); } catch(err){ toast(errText(err)); adminModels(); }
+    b.disabled = false;
+  });
   $('#slSave').addEventListener('click', () => adminSaveSale(false));
   $('#slOff').addEventListener('click', () => adminSaveSale(true));
   $('#blkCopy').addEventListener('click', () => copyRaw(USER.support || SUPPORT, () => toast(t('blk.copied'))));
@@ -2539,7 +2913,15 @@ function refreshUsage(delay){
     if (!state.user) return;
     try {
       const u = await AI.usage();
+      try { store.set('usage', JSON.stringify({ email: USER.email, u })); } catch(e){}
+      applyUsage(u);
+    } catch(e){}
+  }, delay || 0);
+}
+function applyUsage(u){
+    {
       USER.plan = u.plan || 'spark';
+      USER.attachMB = u.attachMB || 0;
       USER.window5h = { used: u.w.used, total: u.w.total, resetAt: u.w.resetAt };
       USER.month = { used: u.m.used, total: u.m.total, resetAt: u.m.resetAt };
       USER.builds = u.builds || 0; USER.invites = u.invites || 0; USER.bonus = u.bonus || 0;
@@ -2552,9 +2934,14 @@ function refreshUsage(delay){
       if (typeof u.needVerify === 'boolean') setNeedVerify(u.needVerify);
       renderUsage(); renderPlans(); renderBonuses();
       const sp = $('#setPlan'); if (sp) sp.textContent = cap(USER.plan) + ' →';
-    } catch(e){}
-  }, delay || 0);
+      ensureModel(); renderModelList();
+    }
 }
+// account freeze / admin rights are checked every 20 seconds while the site is open
+setInterval(() => {
+  if (!state.user || document.visibilityState !== 'visible') return;
+  AI.get('status').then(r => { if (JSON.stringify(r.blocked || null) !== JSON.stringify(USER.blocked || null)) setBlocked(r.blocked || null); if (!!r.admin !== !!USER.admin) refreshUsage(0); }).catch(() => {});
+}, 20000);
 async function claimRef(){
   const code = store.get('ref', null);
   if (!code || !state.user || claimRef.busy) return;
@@ -2591,10 +2978,12 @@ function md(src){
   }).join('');
 }
 function msgBody(m){
-  if (m.typing && !m.text) return '<div class="typing"><i></i><i></i><i></i></div>';
+  if (m.typing && !m.text && m.kind !== 'image') return '<div class="typing"><i></i><i></i><i></i></div>';
   if (m.errKey) return esc(t(m.errKey, { e: m.errDetail || '', time: m.errDetail || '' }));
   if (m.key) return esc(t(m.key));
-  return md(m.text || '') + (m.stopped ? `\n<small style="color:var(--faint)">${esc(t('m.stopped'))}</small>` : '');
+  if (m.images && m.images.length) return `<div class="gen-imgs">${m.images.map((src, i) => `<figure><img src="${esc(src)}" alt="" loading="lazy"><a href="${esc(src)}" download="mundora-image-${i + 1}.png" target="_blank" rel="noopener">${esc(t('img.dl'))}</a></figure>`).join('')}</div>`;
+  if (m.typing && m.kind === 'image') return `<div class="typing"><i></i><i></i><i></i></div> <small style="color:var(--faint)">${esc(t('img.gen'))}</small>`;
+  return md(m.text || '') + (m.stopped ? `\n<small style="color:var(--faint)">${esc(t('m.stopped'))}</small>` : '') + (m.proj ? `\n<button type="button" class="proj-link" data-openproj="${esc(m.proj)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>${esc(t('proj.saved'))} · ${esc(t('proj.open'))}</button>` : '');
 }
 const IC = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="11" height="11" rx="3"/><path d="M15.5 8.5V7a2.5 2.5 0 0 0-2.5-2.5H7A2.5 2.5 0 0 0 4.5 7v6A2.5 2.5 0 0 0 7 15.5h1.5"/></svg>',
@@ -2609,8 +2998,9 @@ function msgEl(m, anim){
   let el;
   if (m.role === 'user'){
     el = document.createElement('div'); el.className = 'uwrap'; el.dataset.i = i;
-    el.innerHTML = `<div class="msg user"></div><div class="acts">${actBtn('copy','copy','chat.copy')}${actBtn('edit','edit','chat.edit')}</div>`;
+    el.innerHTML = `${m.att && m.att.length ? `<div class="u-att">${m.att.map(a => a.kind === 'image' && a.thumb ? `<img src="${esc(a.thumb)}" alt="${esc(a.name)}">` : `<span class="uf">${esc(a.name)}</span>`).join('')}</div>` : ''}<div class="msg user"></div><div class="acts">${actBtn('copy','copy','chat.copy')}${actBtn('edit','edit','chat.edit')}</div>`;
     $('.msg', el).textContent = m.text;
+    if (!m.text) $('.msg', el).style.display = 'none';
   } else {
     const info = m.model ? parseModel(m.model) : null;
     el = document.createElement('div'); el.dataset.i = i;
@@ -2622,7 +3012,7 @@ function msgEl(m, anim){
 }
 function whoHTML(m){
   const info = m.model ? parseModel(m.model) : null, asked = m.asked ? parseModel(m.asked) : null;
-  return `<div class="who">${info ? logoSvg(info.fam) : '<svg viewBox="0 0 32 32"><use href="#ic-mark"/></svg>'}${esc(info ? info.name : 'Mundora')}${asked ? `<small class="inst">${esc(t('m.instead', { m: asked.name }))}</small>` : ''}</div>`;
+  return `<div class="who">${info ? logoSvg(info) : '<svg viewBox="0 0 32 32"><use href="#ic-mark"/></svg>'}${esc(info ? info.name : 'Mundora')}${asked ? `<small class="inst">${esc(t('m.instead', { m: asked.name }))}</small>` : ''}</div>`;
 }
 function renderChatTitle(){
   const c = curConv();
@@ -2648,7 +3038,7 @@ const convKey = () => 'chats:' + (USER.email || 'guest');
 function loadConvs(){ try { return JSON.parse(store.get(convKey(), '[]')) || []; } catch(e){ return []; } }
 function saveConvs(list){ try { store.set(convKey(), JSON.stringify(list.slice(0, 60))); } catch(e){} }
 function curConv(){ return state.chatId ? loadConvs().find(c => c.id === state.chatId) : null; }
-const plainMsg = m => { const o = { role:m.role, text:m.text || '' }; if (m.model) o.model = m.model; if (m.asked) o.asked = m.asked; if (m.errKey){ o.errKey = m.errKey; o.errDetail = m.errDetail; } if (m.stopped) o.stopped = true; return o; };
+const plainMsg = m => { const o = { role:m.role, text:m.text || '' }; if (m.model) o.model = m.model; if (m.att) o.att = m.att; if (m.saved || m.images) o.images = m.saved || m.images; if (m.proj) o.proj = m.proj; if (m.errKey){ o.errKey = m.errKey; o.errDetail = m.errDetail; } if (m.stopped) o.stopped = true; return o; };
 function saveCurrent(){
   if (!state.messages.length) return;
   const list = loadConvs();
@@ -2659,7 +3049,7 @@ function saveCurrent(){
     list.unshift({ id: state.chatId, title: title.length > 60 ? title.slice(0, 58).trim() + '…' : title, mode: state.convMode, created: Date.now() });
   }
   const c = list.find(x => x.id === state.chatId) || (list.unshift({ id: state.chatId, title: '…', mode: state.convMode, created: Date.now() }), list[0]);
-  c.updated = Date.now(); c.mode = state.convMode; c.model = state.model;
+  c.updated = Date.now(); c.mode = state.convMode; c.kind = state.convKind || null; c.model = state.model;
   c.messages = state.messages.filter(m => !m.typing || m.text).slice(-120).map(plainMsg);
   list.sort((a, b) => (b.updated || 0) - (a.updated || 0));
   saveConvs(list); store.set('chatId', state.chatId);
@@ -2668,14 +3058,14 @@ function saveCurrent(){
 async function openConv(id){
   if (chatAbort) chatAbort.abort();
   const c = await fullConv(id); if (!c) return;
-  state.chatId = c.id; state.convMode = c.mode || 'chat';
+  state.chatId = c.id; state.convMode = c.mode || 'chat'; state.convKind = c.kind || null;
   state.messages = (c.messages || []).map(m => Object.assign({}, m));
   store.set('chatId', c.id); cancelEdit(); renderMsgs();
   closeSheet(); go('#/chat'); scrollChat(false);
 }
 function newChat(){
   if (chatAbort) chatAbort.abort();
-  state.messages = []; state.chatId = null; state.convMode = 'chat'; store.del('chatId');
+  state.messages = []; state.chatId = null; state.convMode = 'chat'; state.convKind = null; store.del('chatId');
   cancelEdit(); renderMsgs();
 }
 function delConv(id){
@@ -2694,7 +3084,7 @@ function renderHistory(){
     const s = (c.updated || 0) >= +day ? 'hist.today' : 'hist.earlier';
     if (s !== sec){ sec = s; h += `<div class="hsec">${esc(t(s))}</div>`; }
     const info = c.model ? parseModel(c.model) : null;
-    h += `<div class="hi${c.id === state.chatId ? ' cur' : ''}"><button type="button" class="ho" data-conv="${esc(c.id)}">${info ? logoSvg(info.fam) : '<svg viewBox="0 0 32 32"><use href="#ic-mark"/></svg>'}<span><b>${esc(c.title || t('chat.new'))}</b><small>${esc(fmt(c.updated))}${info ? ' · ' + esc(info.name) : ''}</small></span></button><button type="button" class="hdel" data-del="${esc(c.id)}" aria-label="${esc(t('hist.del'))}">${IC.del}</button></div>`;
+    h += `<div class="hi${c.id === state.chatId ? ' cur' : ''}"><button type="button" class="ho" data-conv="${esc(c.id)}">${info ? logoSvg(info) : '<svg viewBox="0 0 32 32"><use href="#ic-mark"/></svg>'}<span><b>${esc(c.title || t('chat.new'))}</b><small>${esc(fmt(c.updated))}${info ? ' · ' + esc(info.name) : ''}</small></span></button><button type="button" class="hdel" data-del="${esc(c.id)}" aria-label="${esc(t('hist.del'))}">${IC.del}</button></div>`;
   });
   box.innerHTML = h;
 }
@@ -2715,22 +3105,30 @@ async function restoreChat(){
   renderMsgs();
 }
 function cancelEdit(){ state.editFrom = null; $('#editBar').classList.remove('show'); }
-async function sendChat(text, mode){
+async function sendChat(text, mode, atts, kind){
   if (chatAbort) return;
+  atts = atts || [];
   if (state.editFrom != null && state.editFrom < state.messages.length){
     if (state.editFrom === 0 && state.chatId){ const l = loadConvs(), c = l.find(x => x.id === state.chatId); if (c){ const tl = text.split('\n')[0].trim().replace(/\s+/g, ' '); c.title = tl.length > 60 ? tl.slice(0, 58).trim() + '…' : tl; saveConvs(l); } }
     state.messages = state.messages.slice(0, state.editFrom); cancelEdit(); renderMsgs();
   }
   cancelEdit();
-  if (!state.messages.length) state.convMode = mode || 'chat';
-  const user = { role:'user', text }; state.messages.push(user); appendMsg(user);
+  if (!state.messages.length){ state.convMode = mode || 'chat'; state.convKind = kind || (state.convMode === 'site' ? 'site' : state.convMode === 'code' ? 'code' : null); }
+  const user = { role:'user', text };
+  if (atts.length){ user.att = atts.map(a => ({ kind: a.kind, name: a.name, thumb: a.thumb || '' })); user._parts = atts; if (!text) user.text = ''; }
+  state.messages.push(user); appendMsg(user);
   saveCurrent();
   await runBot();
 }
 async function runBot(){
   if (!state.model){ await loadModels(); }
   const model = state.model || FALLBACK_MODELS[0];
-  const history = state.messages.filter(m => m.role === 'user' || (m.role === 'bot' && m.text && !m.errKey)).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+  const mi = parseModel(model);
+  const lastQ = ([...state.messages].reverse().find(m => m.role === 'user') || {}).text || '';
+  if (mi && mi.fam === 'gpt' && MODELS.imageId && wantsImage(lastQ)) return runImage(MODELS.imageId, model);
+  const hist = state.messages.filter(m => m.role === 'user' || (m.role === 'bot' && m.text && !m.errKey && !m.images));
+  const lastUser = [...hist].reverse().find(m => m.role === 'user');
+  const history = hist.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.role === 'user' ? userContent(m, m === lastUser) : m.text }));
   const bot = { role:'bot', typing:true, text:'', model };
   state.messages.push(bot); appendMsg(bot); scrollChat(true);
   const body = () => $('.body', bot.el);
@@ -2752,6 +3150,7 @@ async function runBot(){
     else {
       const st = err && err.status;
       if (err && err.code === 'limit'){ bot.errKey = err.which === 'w' ? 'm.err.limitW' : 'm.err.limitM'; bot.errDetail = fmtWhen(err.resetAt, err.which === 'm'); }
+      else if (err && err.code === 'premium'){ bot.errKey = 'm.err.premium'; }
       else if (err && err.code === 'blocked'){ bot.errKey = err.status === 'deleted' ? 'blk.deleted' : 'blk.frozen'; refreshUsage(0); }
       else if (err && err.code === 'verify'){ bot.errKey = 'm.err.verify'; setTimeout(() => setNeedVerify(true), 1200); }
       else if (st === 401){ bot.errKey = 'm.err.auth'; }
@@ -2764,7 +3163,7 @@ async function runBot(){
     bot.el.classList.remove('busy');
     const stick = nearBottom(); body().innerHTML = msgBody(bot); if (stick) scrollChat(false);
     chatAbort = null; setBusy(false);
-    if (state.messages.includes(bot)) saveCurrent();
+    if (state.messages.includes(bot)){ saveCurrent(); if (!bot.errKey && bot.text) projectFromAnswer(bot); }
     updToBottom(); refreshUsage(600);
   }
 }
@@ -2907,6 +3306,7 @@ document.addEventListener('click', e => {
   if (el.dataset.create){
     const id = el.dataset.create;
     const mode = id === 'site' || id === 'slides' ? 'site' : id === 'chat' ? 'chat' : 'code';
+    state.pendingKind = ['site', 'game', 'slides', 'code'].includes(id) ? id : null;
     closeSheet();
     go('#/home');
     setTimeout(() => {
@@ -2974,8 +3374,8 @@ let lastVW = window.innerWidth;
 window.addEventListener('resize', () => { if (window.innerWidth === lastVW) return; lastVW = window.innerWidth; allSegs().forEach(placeThumb); });
 
 /* ---------- init ---------- */
-bindComposer($('#homeInput'), $('#homeSend'), 80, text => { const mode = state.mode; if (!chatAbort) newChat(); go('#/chat'); setTimeout(() => sendChat(text, mode), 80); });
-bindComposer($('#chatInput'), $('#chatSend'), 26, text => sendChat(text, 'chat'));
+bindComposer($('#homeInput'), $('#homeSend'), 80, text => { const mode = state.mode, atts = takeAtt('home'), kind = state.pendingKind; state.pendingKind = null; if (!chatAbort) newChat(); go('#/chat'); setTimeout(() => sendChat(text, mode, atts, kind), 80); }, 'home');
+bindComposer($('#chatInput'), $('#chatSend'), 26, text => sendChat(text, 'chat', takeAtt('chat')), 'chat');
 try { state.user = JSON.parse(store.get('user', 'null')); } catch(e){ state.user = null; }
 state.needVerify = !!(state.user && store.get('nv', null) === state.user.email);
 USER.admin = !!(state.user && store.get('adm', null) === state.user.email);
@@ -2984,6 +3384,9 @@ $('#authSubmit').addEventListener('click', submitAuth);
 $('#gBtn').addEventListener('click', googleAuth);
 bindOtp();
 bindAdmin();
+bindProjects();
+try { const c = JSON.parse(store.get('usage', 'null')); if (c && state.user && c.email === state.user.email) applyUsage(c.u); } catch(e){}
+renderProjects();
 $('#setAdminRow').hidden = !USER.admin;
 $('#forgotBtn').addEventListener('click', resetPassword);
 ['#fName','#fEmail','#fPass'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submitAuth(); } }));
@@ -3002,6 +3405,7 @@ $('#speedSeg').addEventListener('click', e => { const b = e.target.closest('[dat
 $('#modelList').addEventListener('click', e => {
   if (e.target.closest('#modelRetry')){ MODELS.failed = false; MODELS.err = ''; renderModelList(); loadModels(true); return; }
   const b = e.target.closest('[data-model]'); if (!b) return;
+  if (b.dataset.locked){ toast(t('m.premiumT')); closeSheet(); go('#/profile/plans'); return; }
   state.model = b.dataset.model; store.set('model', state.model); prefsChanged();
   renderModelList(); renderModelChip(); setTimeout(() => closeSheet(), 180);
 });
@@ -3018,7 +3422,7 @@ $('#msgs').addEventListener('click', e => {
   }
 });
 renderModelChip();
-if (state.user){ loadModels(); refreshUsage(800); setTimeout(claimRef, 2500); setTimeout(syncConvs, 1200); setTimeout(pullPrefs, 600); }
+if (state.user){ loadModels(); refreshUsage(800); setTimeout(claimRef, 2500); setTimeout(syncConvs, 1200); setTimeout(pullPrefs, 600); setTimeout(syncProjs, 1800); }
 restoreChat(); state.chatReady = true;
 refreshUser();
 stars.init();
