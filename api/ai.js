@@ -61,7 +61,7 @@ async function verify(req) {
     const now = Date.now() / 1000;
     if (!ok || p.aud !== PROJECT || p.iss !== 'https://securetoken.google.com/' + PROJECT || !p.sub || p.exp < now || p.iat > now + 300) return null;
     const provider = (p.firebase && p.firebase.sign_in_provider) || '';
-    return { uid: p.sub, email: (p.email || '').toLowerCase(), name: p.name || '', verified: !!p.email_verified, provider, token: tok };
+    return { uid: p.sub, email: (p.email || '').toLowerCase(), name: p.name || '', verified: false, mailOk: !!p.email_verified, provider, token: tok };
   } catch (e) { return null; }
 }
 
@@ -168,7 +168,9 @@ async function upstream(base, key, payload, signal) {
 
 /* ---------- email codes ---------- */
 const hasMail = () => !!((process.env.BREVO_API_KEY || '').trim() && (process.env.MAIL_FROM || '').trim());
-const needsCode = u => u.provider === 'password';
+// every account confirms its email with our 6-digit code, Google sign-in too
+// (without the database codes can't be stored, then only password accounts with an unconfirmed email are stopped)
+const needsCode = u => hasStore() || (u.provider === 'password' && !u.mailOk);
 async function sha(s) { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, '0')).join(''); }
 const MAIL_TXT = {
   en: { s: 'Your Mundora code: {c}', h: 'Confirm your email', p: 'Enter this code in Mundora to confirm your email. It works for 10 minutes.', f: 'If you didn’t sign up for Mundora, just ignore this email.' },
@@ -294,7 +296,17 @@ export default async function handler(req) {
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
   // open https://<site>/api/ai?p=health in a browser to check the server setup
-  if (p === 'health') return json({ ok: true, version: 21, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  // a picture attached to a chat: opened in full size on every device (the id is long and random)
+  if (p === 'img' && req.method === 'GET') {
+    const id = new URL(req.url).searchParams.get('id') || '';
+    if (!/^[A-Za-z0-9]{16,40}$/.test(id) || !hasStore()) return new Response('Not found', { status: 404 });
+    let d = null; try { [d] = await redis([['GET', 'img:' + id]]); } catch (e) {}
+    const m = d && String(d).match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/);
+    if (!m) return new Response('Not found', { status: 404 });
+    const bin = Uint8Array.from(atob(m[2]), c => c.charCodeAt(0));
+    return new Response(bin, { headers: { 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
+  }
+  if (p === 'health') return json({ ok: true, version: 23, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
@@ -304,11 +316,25 @@ export default async function handler(req) {
   if (hasStore() && p !== 'chat') {
     try { const [st, ev] = await redis([['GET', 'u:' + u.uid + ':status'], ['GET', 'u:' + u.uid + ':ev']]); status = parseJ(st, null); evFlag = ev; } catch (e) {}
   }
-  const admin = isAdmin(u, u.verified || evFlag === '1');
+  const admin = isAdmin(u, evFlag === '1' || (!hasStore() && u.mailOk));
   if (status && !admin && !['usage', 'prefs'].includes(p)) return err('Account ' + status.s, 403, { code: 'blocked', status: status.s, support: SUPPORT });
 
 
 
+  if (p === 'img-put' && req.method === 'POST') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const b = await req.json().catch(() => null), d = String((b && b.data) || '');
+    if (!/^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(d) || d.length > 950000) return err('Bad picture', 400);
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(24)), x => A[x % A.length]).join('');
+    const key = 'u:' + u.uid + ':imgs';
+    const [, , n] = await redis([['SET', 'img:' + id, d], ['ZADD', key, now(), id], ['ZCARD', key]]);
+    if (+n > 400) { // keep the newest 400 pictures of each account
+      const [old] = await redis([['ZRANGE', key, 0, +n - 401]]);
+      if (old && old.length) await redis([['DEL', ...old.map(x => 'img:' + x)], ['ZREM', key, ...old]]);
+    }
+    return json({ id, url: '/api/ai?p=img&id=' + id });
+  }
   if (p === 'status' && req.method === 'GET') return json({ blocked: status && !admin ? status : null, admin });
 
   /* ================= ADMIN PANEL ================= */
@@ -691,7 +717,7 @@ export default async function handler(req) {
 
   if (p === 'usage' && req.method === 'GET') {
     const refCode = await refCodeOf(u.uid);
-    if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, attachMB: ATTACH_MB[pl], needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: null }, builds: 0, invites: 0, bonus: 0 }); }
+    if (!hasStore()) { const pl = isAdmin(u, u.mailOk) ? 'cosmos' : 'spark'; return json({ store: false, admin, attachMB: ATTACH_MB[pl], needVerify: needsCode(u), plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: null }, builds: 0, invites: 0, bonus: 0 }); }
     const name = String(new URL(req.url).searchParams.get('n') || u.name || '').slice(0, 60);
     redis([['SET', 'rc:' + refCode, u.uid, 'NX'], ['SET', 'em:' + normEmail(u.email), u.uid], ['SET', 'u:' + u.uid + ':email', u.email], ['SET', 'u:' + u.uid + ':name', name], ['SET', 'u:' + u.uid + ':seen', now()], ['SADD', 'users', u.uid], ['ZADD', 'users:seen', now(), u.uid]]).catch(() => {});
     const acc = await account(u);
@@ -779,7 +805,7 @@ export default async function handler(req) {
     const chatModel = String(b.chatModel || '');
     if (!prompt) return err('Bad request', 400);
     let acc = null;
-    if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
+    if (!hasStore() && needsCode(u)) return err('Confirm your email first', 403, { code: 'verify' });
     if (hasStore()) {
       try { acc = await account(u); } catch (e) {}
       if (acc && needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
@@ -847,7 +873,7 @@ export default async function handler(req) {
     for (let i = messages.length - 1; i >= 0; i--) { total += JSON.stringify(messages[i].content).length; if (total > 4200000) { messages = messages.slice(i + 1); break; } }
 
     let acc = null, adminC = admin, plan = 'spark';
-    if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
+    if (!hasStore() && needsCode(u)) return err('Confirm your email first', 403, { code: 'verify' });
     if (hasStore()) {
       const P = 'u:' + u.uid;
       try { acc = await account(u, [['GET', P + ':status'], ['GET', 'cfg:models'], ['GET', P + ':mem'], ['GET', P + ':memoff'], ['HGETALL', P + ':convs']]); } catch (e) { acc = null; }
