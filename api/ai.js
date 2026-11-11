@@ -209,6 +209,117 @@ function splitThinkS(raw) {
   if (ci >= 0) { think = (vis.slice(0, ci) + '\n' + think).trim(); vis = vis.slice(ci).replace(/<\/think(ing)?>/i, ''); }
   return { think: think.trim(), text: vis.replace(/^\s+/, '') };
 }
+/* ---- answers that keep being written without the browser ----
+   One run of a server function lasts at most 300 s on Vercel. A long answer (a big project) is written in parts:
+   near 4.5 min the run saves what it has and starts the next run itself, which asks the model to go on
+   from that exact point. Up to 8 parts (about 35 min). */
+const SEG_MS = +(process.env.MUNDORA_SEG_MS || 270000), MAX_SEG = 8;
+const CONT_PROMPT = 'Your previous answer was cut off because it was very long. Continue it exactly from the point where it stopped: no greeting, no repetition, no summary of what is already written, no <think> block — output only the rest. If you stopped inside a code block, go on with the code and close the block when the file is finished.';
+const contSig = async (key, id) => (await sha('mundora-cont:' + key + ':' + id)).slice(0, 48);
+// one piece of a streamed answer, whatever the provider's format: { c: text, r: reasoning }
+function sseDelta(j) {
+  let c = '', r = '';
+  const ch = j && j.choices && j.choices[0];
+  if (ch) {
+    const d = ch.delta || ch.message || {};
+    const cc = d.content;
+    if (typeof cc === 'string') c = cc; else if (Array.isArray(cc)) c = cc.map(x => (x && (x.text || (typeof x.content === 'string' ? x.content : ''))) || '').join('');
+    if (!c && typeof ch.text === 'string') c = ch.text;
+    const rr = d.reasoning_content || d.reasoning || d.thinking;
+    if (typeof rr === 'string') r = rr; else if (rr && typeof rr.content === 'string') r = rr.content;
+  } else if (j && j.type === 'response.output_text.delta' && typeof j.delta === 'string') c = j.delta;
+  else if (j && /^response\.reasoning.*\.delta$/.test(j.type || '') && typeof j.delta === 'string') r = j.delta;
+  else if (j && j.type === 'content_block_delta' && j.delta) { if (j.delta.type === 'text_delta') c = j.delta.text || ''; else if (j.delta.type === 'thinking_delta') r = j.delta.thinking || ''; }
+  return { c, r };
+}
+const textOnly = msgs => msgs.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : m.content.map(x => x.type === 'text' ? x.text : '[picture]').join('\n') }));
+async function pumpJob(o) {
+  // o: r, upAbort, uid, job, convId, model, t0, segStart, raw, native, out ({ctrl, isGone}) | null, plan, mx, inTok, pre, build, seg, messages, key, origin, keepAlive
+  const dec = new TextDecoder(), JK = 'job:' + o.job;
+  let buf = '', raw = o.raw || '', native = o.native || '', segOut = '', status = 'done', lastSave = Date.now(), cut = false, errMsg = '';
+  const save = st => redis([['SET', JK, JSON.stringify({ uid: o.uid, status: st, raw, think: native, model: o.model, conv: o.convId, t: o.t0, seg: o.seg, at: Date.now(), error: errMsg }), 'EX', 86400]]);
+  const reader = o.r.body.getReader();
+  const timer = o.job ? setTimeout(() => { cut = true; o.upAbort.abort(); reader.cancel().catch(() => {}); }, Math.max(1000, SEG_MS - (Date.now() - o.segStart))) : null;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done || cut) break;
+      if (o.out && !o.out.isGone()) { try { o.out.ctrl.enqueue(value); } catch (e) { o.out.gone(); } }
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line.startsWith('data:')) continue;
+        const d = line.slice(5).trim(); if (d === '[DONE]') continue;
+        try {
+          const j = JSON.parse(d);
+          if ((j.error || j.type === 'error') && !raw && !native) { status = 'error'; errMsg = String((typeof j.error === 'string' ? j.error : j.error && j.error.message) || 'error').slice(0, 300); }
+          const dd = sseDelta(j);
+          if (dd.c) { raw += dd.c; segOut += dd.c; }
+          if (dd.r) { native += dd.r; segOut += dd.r; }
+        } catch (e) {}
+      }
+      // while nobody watches, save what's written so far (rarely, to keep the database calm)
+      const away = !o.out || o.out.isGone();
+      if (o.job && Date.now() - lastSave > (away ? 2500 : 8000)) {
+        lastSave = Date.now();
+        const [, stop] = await redis([['SET', JK, JSON.stringify({ uid: o.uid, status: 'run', raw, think: native, model: o.model, conv: o.convId, t: o.t0, seg: o.seg, at: Date.now() }), 'EX', 86400], ['GET', JK + ':stop']]).catch(() => []);
+        if (stop) { status = 'stopped'; o.upAbort.abort(); break; }
+      }
+    }
+  } catch (e) { if (!cut) status = raw || native ? 'done' : 'error'; }
+  if (timer) clearTimeout(timer);
+  if (status === 'error' && (raw || native)) status = 'done';
+  // tokens of this part: what the model read + what it wrote
+  const used = o.seg === 1 ? Math.max(0, o.mx * costFor(o.plan, o.inTok + countTokens(segOut)) - o.pre) : o.mx * costFor(o.plan, o.inTok + countTokens(segOut));
+  await charge({ uid: o.uid }, used, o.build && o.seg === 1 && raw.length > 0).catch(() => {});
+  // the run is about to end: hand the answer over to a fresh run
+  if (cut && status !== 'stopped' && o.job && o.seg < MAX_SEG) {
+    let ok = false;
+    try {
+      let msgs = textOnly(o.messages);
+      while (JSON.stringify(msgs).length > 700000 && msgs.length > 2) msgs = [msgs[0]].concat(msgs.slice(2));
+      await redis([['SET', JK, JSON.stringify({ uid: o.uid, status: 'run', raw, think: native, model: o.model, conv: o.convId, t: o.t0, seg: o.seg + 1, at: Date.now() }), 'EX', 86400],
+        ['SET', 'jobm:' + o.job, JSON.stringify({ uid: o.uid, model: o.model, conv: o.convId, t0: o.t0, plan: o.plan, mx: o.mx, build: o.build, seg: o.seg + 1, messages: msgs }), 'EX', 3600]]);
+      const r2 = await fetch(o.origin + '/api/ai?p=job-cont', { method: 'POST', headers: { 'content-type': 'application/json', 'x-mundora-cont': await contSig(o.key, o.job) }, body: JSON.stringify({ id: o.job }) });
+      ok = r2.ok;
+    } catch (e) {}
+    if (ok) {
+      if (o.out && !o.out.isGone()) { try { o.out.ctrl.enqueue(new TextEncoder().encode('data: {"mundora":{"cont":1}}\n\n')); } catch (e) {} }
+      if (o.out) try { o.out.ctrl.close(); } catch (e) {}
+      return;
+    }
+    status = 'done';
+  }
+  if (cut && status !== 'stopped') status = 'done';   // the last part: keep what's written
+  if (o.out) try { o.out.ctrl.close(); } catch (e) {}
+  if (!o.job) return;
+  await save(status).catch(() => {});
+  // put the finished answer into the saved chat, so it's there on every device even if the site is closed
+  if (o.convId && status !== 'error') {
+    try {
+      const CK = 'u:' + o.uid + ':conv:' + o.convId;
+      const [c] = await redis([['GET', CK]]);
+      const conv = parseJ(c, null);
+      const m = conv && Array.isArray(conv.messages) && conv.messages.find(x => x && x.job === o.job);
+      if (m && m.pending) {
+        const sp = splitThinkS(raw);
+        m.text = sp.text; m.think = (native.trim() + (native.trim() && sp.think ? '\n' : '') + sp.think).trim().slice(0, 12000);
+        if (m.think) m.thinkMs = Math.min(Date.now() - o.t0, 600000);
+        if (status === 'stopped') m.stopped = true;
+        delete m.pending; conv.updated = Date.now();
+        const full = JSON.stringify(conv);
+        if (full.length <= CONV_MAX) {
+          const [meta] = await redis([['HGET', 'u:' + o.uid + ':convs', o.convId]]);
+          const mt = parseJ(meta, null);
+          const cmds = [['SET', CK, full]];
+          if (mt) { mt.updated = conv.updated; cmds.push(['HSET', 'u:' + o.uid + ':convs', o.convId, JSON.stringify(mt)]); }
+          await redis(cmds);
+        }
+      }
+    } catch (e) {}
+  }
+}
 // files and pictures sent earlier in a chat are referenced by id; here they are put back so the model can see them again
 const REF_IMG = /^mundora-img:([A-Za-z0-9]{16,40})$/, REF_FILE = /\[\[mundora-file:([A-Za-z0-9]{16,40})\]\]/g;
 const refImgId = x => { const m = x && x.type === 'image_url' && REF_IMG.exec(String((x.image_url && x.image_url.url) || '')); return m ? m[1] : ''; };
@@ -342,8 +453,31 @@ export default async function handler(req, ctx) {
     const bin = Uint8Array.from(atob(m[2]), c => c.charCodeAt(0));
     return new Response(bin, { headers: { 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
   }
-  if (p === 'health') return json({ ok: true, version: 25, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 28, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
+  if (p === 'job-cont' && req.method === 'POST') {
+    const b = await req.json().catch(() => ({}));
+    const id = String(b.id || '');
+    if (!JOB_RE.test(id) || !hasStore() || req.headers.get('x-mundora-cont') !== await contSig(key, id)) return err('Forbidden', 403);
+    const [jm, jj] = await redis([['GET', 'jobm:' + id], ['GET', 'job:' + id]]);
+    const M = parseJ(jm, null), J = parseJ(jj, null);
+    if (!M || !J || J.status !== 'run') return json({ ok: false });
+    const sofar = splitThinkS(J.raw || '').text;
+    const messages = M.messages.concat([{ role: 'assistant', content: sofar || '…' }, { role: 'user', content: CONT_PROMPT }]);
+    const inTok = messages.reduce((n, m) => n + countTokens(m.content), 0);
+    const upAbort = new AbortController();
+    keepAlive((async () => {
+      let r;
+      try { r = await upstream(base, key, { model: M.model, messages, stream: true }, upAbort.signal); } catch (e) { r = null; }
+      if (!r || !r.ok || !r.body) {   // the model didn't answer: keep what's written
+        await redis([['SET', 'job:' + id, JSON.stringify(Object.assign({}, J, { status: 'done', at: Date.now() })), 'EX', 86400]]).catch(() => {});
+        return;
+      }
+      await pumpJob({ r, upAbort, uid: M.uid, job: id, convId: M.conv, model: M.model, t0: M.t0, segStart: Date.now(), raw: J.raw || '', native: J.think || '', out: null,
+        plan: M.plan, mx: M.mx, inTok, pre: 0, build: M.build, seg: M.seg, messages: M.messages, key, origin: new URL(req.url).origin });
+    })());
+    return json({ ok: true });
+  }
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
 
@@ -957,7 +1091,7 @@ export default async function handler(req, ctx) {
     if (effort === 'auto') effort = simple ? 'fast' : 'normal';
     if (effort === 'fast' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'low';
     if (effort === 'deep' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'high';
-    if (body.effort !== 'deep' && simple) payload.max_tokens = 1200;
+    // no answer-length cap: models think before writing, and a cap could be eaten by the thinking, leaving an empty answer
     const build = body.mode === 'site' || body.mode === 'code';
 
     // tokens: everything the model reads (instructions, memory, the whole chat) + the answer
@@ -965,89 +1099,51 @@ export default async function handler(req, ctx) {
     const mx = modelX(model), pre = mx * costFor(plan, inTok);
     const upAbort = new AbortController();
     if (!job) req.signal && req.signal.addEventListener('abort', () => upAbort.abort(), { once: true });
-    const r = await upstream(base, key, payload, upAbort.signal);
-    if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
-
-    const ct = r.headers.get('content-type') || '';
-    if (!r.body || !/event-stream/.test(ct)) {
+    if (!stream) {
+      const r = await upstream(base, key, payload, upAbort.signal);
+      if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
       const j = await r.json().catch(() => ({}));
       const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
       await charge(u, mx * costFor(plan, inTok + countTokens(typeof c === 'string' ? c : '')), build);
       return json(j);
     }
-
-    // charge the input right away (so a stopped answer is still counted), the rest when the stream ends
-    charge(u, pre, false);
-    const JK = 'job:' + job, t0 = Date.now();
-    const jobSave = (status, raw, native) => redis([['SET', JK, JSON.stringify({ uid: u.uid, status, raw, think: native, model, conv: convId, t: t0, at: Date.now() }), 'EX', 86400]]);
-    if (job) await jobSave('run', '', '').catch(() => {});
-    const dec = new TextDecoder();
+    // Answer the browser at once: Vercel cuts a request (HTTP 504) when nothing is sent within 25 s,
+    // and a model can think longer than that before its first word. Until it starts, a small "still here" note goes out every 8 s.
+    const t0 = Date.now(), enc = new TextEncoder();
     let ctrl = null, gone = false;
-    const out = new ReadableStream({ start(c) { ctrl = c; }, cancel() { gone = true; } });
-    // one loop reads the model: it passes everything to the browser while it's there,
-    // and keeps going (saving the answer) if the browser is closed
-    const work = (async () => {
-      let buf = '', raw = '', native = '', status = 'done', lastSave = Date.now();
-      const reader = r.body.getReader();
-      try {
-        for (;;) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          if (!gone) { try { ctrl.enqueue(value); } catch (e) { gone = true; } }
-          buf += dec.decode(value, { stream: true });
-          let i;
-          while ((i = buf.indexOf('\n')) >= 0) {
-            const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-            if (!line.startsWith('data:')) continue;
-            const d = line.slice(5).trim(); if (d === '[DONE]') continue;
-            try {
-              const j = JSON.parse(d);
-              const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
-              if (typeof dl.content === 'string') raw += dl.content;
-              const rr = dl.reasoning_content || dl.reasoning || dl.thinking;
-              if (typeof rr === 'string') native += rr;
-            } catch (e) {}
-          }
-          // while nobody watches, save what's written so far (rarely, to keep the database calm)
-          if (job && Date.now() - lastSave > (gone ? 2500 : 8000)) {
-            lastSave = Date.now();
-            const [, stop] = await redis([['SET', JK, JSON.stringify({ uid: u.uid, status: 'run', raw, think: native, model, conv: convId, t: t0, at: Date.now() }), 'EX', 86400], ['GET', JK + ':stop']]).catch(() => []);
-            if (stop) { status = 'stopped'; upAbort.abort(); break; }
-          }
-        }
-      } catch (e) { status = raw || native ? 'done' : 'error'; }
-      try { ctrl.close(); } catch (e) {}
-      await charge(u, Math.max(0, mx * costFor(plan, inTok + countTokens(raw + native)) - pre), build && raw.length > 0).catch(() => {});
-      if (job) {
-        await jobSave(status, raw, native).catch(() => {});
-        // put the finished answer into the saved chat, so it's there on every device even if the site is closed
-        if (convId && status !== 'error') {
-          try {
-            const CK = 'u:' + u.uid + ':conv:' + convId;
-            const [c] = await redis([['GET', CK]]);
-            const conv = parseJ(c, null);
-            const m = conv && Array.isArray(conv.messages) && conv.messages.find(x => x && x.job === job);
-            if (m && m.pending) {
-              const sp = splitThinkS(raw);
-              m.text = sp.text; m.think = (native.trim() + (native.trim() && sp.think ? '\n' : '') + sp.think).trim().slice(0, 12000);
-              if (m.think) m.thinkMs = Math.min(Date.now() - t0, 600000);
-              if (status === 'stopped') m.stopped = true;
-              delete m.pending; conv.updated = Date.now();
-              const full = JSON.stringify(conv);
-              if (full.length <= CONV_MAX) {
-                const [meta] = await redis([['HGET', 'u:' + u.uid + ':convs', convId]]);
-                const mt = parseJ(meta, null);
-                const cmds = [['SET', CK, full]];
-                if (mt) { mt.updated = conv.updated; cmds.push(['HSET', 'u:' + u.uid + ':convs', convId, JSON.stringify(mt)]); }
-                await redis(cmds);
-              }
-            }
-          } catch (e) {}
-        }
+    const out = new ReadableStream({ start(c) { ctrl = c; c.enqueue(enc.encode(': ok\n\n')); }, cancel() { gone = true; } });
+    const outApi = { get ctrl() { return ctrl; }, isGone: () => gone, gone: () => { gone = true; } };
+    const send = x => { if (!gone) try { ctrl.enqueue(enc.encode(x)); } catch (e) { gone = true; } };
+    keepAlive((async () => {
+      const ping = setInterval(() => send(': ping\n\n'), 8000);
+      if (job) await redis([['SET', 'job:' + job, JSON.stringify({ uid: u.uid, status: 'run', raw: '', think: '', model, conv: convId, t: t0, seg: 1, at: t0 }), 'EX', 86400]]).catch(() => {});
+      let r = null, why = '';
+      try { r = await upstream(base, key, payload, upAbort.signal); } catch (e) { why = (e && e.message) || 'network error'; }
+      clearInterval(ping);
+      if (!r || !r.ok || !r.body) {
+        const st = r ? r.status : 502;
+        let msg = why || 'upstream unavailable';
+        if (r) { try { const tx = await r.text(); const j = parseJ(tx, null); msg = (j && j.error && (j.error.message || (typeof j.error === 'string' ? j.error : ''))) || tx.slice(0, 300) || msg; } catch (e) {} }
+        send('data: ' + JSON.stringify({ error: { message: String(msg).slice(0, 300), status: st } }) + '\n\n');
+        try { ctrl.close(); } catch (e) {}
+        if (job) await redis([['SET', 'job:' + job, JSON.stringify({ uid: u.uid, status: 'error', raw: '', think: '', error: String(msg).slice(0, 300), httpStatus: st, model, conv: convId, t: t0, seg: 1, at: Date.now() }), 'EX', 86400]]).catch(() => {});
+        return;
       }
-    })();
-    keepAlive(work);
-    return new Response(out, { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } });
+      // a provider that ignored "stream" and sent the whole answer at once: pass it on as one piece
+      if (!/event-stream/.test(r.headers.get('content-type') || '')) {
+        const j = await r.json().catch(() => ({}));
+        const msg = (j.choices && j.choices[0] && j.choices[0].message) || {};
+        const delta = { content: typeof msg.content === 'string' ? msg.content : '' };
+        const rr = msg.reasoning_content || msg.reasoning;
+        if (typeof rr === 'string' && rr) delta.reasoning_content = rr;
+        r = new Response('data: ' + JSON.stringify({ choices: [{ delta }] }) + '\n\ndata: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } });
+      }
+      // charge the input now (so a stopped answer is still counted), the rest when the answer ends
+      charge(u, pre, false);
+      await pumpJob({ r, upAbort, uid: u.uid, job, convId, model, t0, segStart: t0, raw: '', native: '', out: outApi,
+        plan, mx, inTok, pre, build, seg: 1, messages, key, origin: new URL(req.url).origin });
+    })());
+    return new Response(out, { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache, no-transform', 'x-accel-buffering': 'no' } });
   }
 
   /* ---- answers written in the background ---- */
@@ -1057,7 +1153,7 @@ export default async function handler(req, ctx) {
     const [j] = await redis([['GET', 'job:' + id]]);
     const o = parseJ(j, null);
     if (!o || o.uid !== u.uid) return err('Not found', 404, { code: 'nojob' });
-    return json({ status: o.status, raw: o.raw || '', think: o.think || '', model: o.model, at: o.at });
+    return json({ status: o.status, raw: o.raw || '', think: o.think || '', model: o.model, at: o.at, error: o.error || '', httpStatus: o.httpStatus || 0 });
   }
   if (p === 'job-stop' && req.method === 'POST') {
     const b = await req.json().catch(() => ({}));
