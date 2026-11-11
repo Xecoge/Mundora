@@ -314,4 +314,97 @@ export default async function handler(req) {
     return json({ ok: true, tokens: n });
   }
 
-  if (p
+  if (p === 'ref' && req.method === 'POST') {
+    if (!hasStore()) return err('Storage is not connected', 503);
+    const body = await req.json().catch(() => ({}));
+    const code = String(body.code || '').trim().toUpperCase();
+    const [inviter] = await redis([['GET', 'rc:' + code]]);
+    if (!inviter || inviter === u.uid) return json({ ok: false, reason: 'invalid' });
+    const [evr] = await redis([['GET', 'u:' + u.uid + ':ev']]);
+    if (!u.verified && evr !== '1') return json({ ok: false, reason: 'verify' });
+    // only accounts created in the last 7 days can be counted as invites
+    const lr = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + FB_KEY, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ idToken: u.token }) });
+    const lj = await lr.json().catch(() => ({}));
+    const created = +((lj.users && lj.users[0] && lj.users[0].createdAt) || 0);
+    if (!created || Date.now() - created > 7 * 86400e3) return json({ ok: false, reason: 'old' });
+    const [set] = await redis([['SET', 'u:' + u.uid + ':refBy', inviter, 'NX']]);
+    if (set !== 'OK') return json({ ok: false, reason: 'used' });
+    await redis([['SADD', 'u:' + inviter + ':inv', u.uid]]);
+    return json({ ok: true });
+  }
+
+  if (p === 'chat' && req.method === 'POST') {
+    let body;
+    try { body = await req.json(); } catch (e) { return err('Bad request', 400); }
+    const model = String(body.model || '');
+    if (!/^(claude|gpt|chatgpt)/i.test(model.split('/').pop())) return err('Model not allowed', 400);
+    let messages = (Array.isArray(body.messages) ? body.messages : [])
+      .filter(m => m && /^(system|user|assistant)$/.test(m.role) && typeof m.content === 'string').slice(-40);
+    let total = 0;
+    for (let i = messages.length - 1; i >= 0; i--) { total += messages[i].content.length; if (total > 400000) { messages = messages.slice(i + 1); break; } }
+
+    let acc = null;
+    if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
+    if (hasStore()) {
+      try { acc = await account(u); } catch (e) { acc = null; }
+      if (acc && needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
+      if (acc && !(acc.bonus > 0)) {
+        if (acc.w.total && acc.w.used >= acc.w.total) return err('5-hour limit reached', 429, { code: 'limit', which: 'w', resetAt: acc.w.resetAt });
+        if (acc.m.used >= acc.m.total) return err('Monthly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
+      }
+    }
+
+    const stream = body.stream !== false;
+    const payload = { model, messages, stream };
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    const question = lastUser ? lastUser.content : '';
+    let effort = body.effort === 'fast' || body.effort === 'deep' ? body.effort : 'auto';
+    const simple = isSimple(question, body.mode);
+    if (effort === 'auto') effort = simple ? 'fast' : 'normal';
+    if (effort === 'fast' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'low';
+    if (effort === 'deep' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'high';
+    if (body.effort !== 'deep' && simple) payload.max_tokens = 1200;
+    const build = body.mode === 'site';
+
+    // we count only the new question and the answer, by our own estimate
+    const inTok = countTokens(question);
+    const r = await upstream(base, key, payload, req.signal);
+    if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
+
+    const ct = r.headers.get('content-type') || '';
+    if (!r.body || !/event-stream/.test(ct)) {
+      const j = await r.json().catch(() => ({}));
+      const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      await charge(u, inTok + countTokens(typeof c === 'string' ? c : ''), build);
+      return json(j);
+    }
+
+    // charge the input right away (so a stopped answer is still counted), the rest when the stream ends
+    charge(u, inTok, false);
+    const dec = new TextDecoder();
+    let buf = '', answer = '';
+    const ts = new TransformStream({
+      transform(chunk, ctrl) {
+        ctrl.enqueue(chunk);
+        buf += dec.decode(chunk, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+          if (!line.startsWith('data:')) continue;
+          const d = line.slice(5).trim(); if (d === '[DONE]') continue;
+          try {
+            const j = JSON.parse(d);
+            const c = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
+            if (typeof c === 'string') answer += c;
+          } catch (e) {}
+        }
+      },
+      async flush() {
+        await charge(u, countTokens(answer), build && answer.length > 0);
+      }
+    });
+    return new Response(r.body.pipeThrough(ts), { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } });
+  }
+
+  return err('Not found', 404);
+}
