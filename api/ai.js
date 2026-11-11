@@ -199,6 +199,38 @@ async function sendCodeMail(to, code, lang) {
   if (!r.ok) throw new Error('mail ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }
 const CONV_MAX = 300000;
+const rid = (n = 24) => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; return Array.from(crypto.getRandomValues(new Uint8Array(n)), x => A[x % A.length]).join(''); };
+const JOB_RE = /^[A-Za-z0-9]{12,40}$/;
+// "<think>…</think>answer" → reasoning + visible answer (same rules as on the site)
+function splitThinkS(raw) {
+  let think = '';
+  let vis = String(raw || '').replace(/<(think|thinking)>([\s\S]*?)(<\/\1>|$)/gi, (_, t, b) => { think += (think ? '\n' : '') + b; return ''; });
+  const ci = vis.search(/<\/think(ing)?>/i);
+  if (ci >= 0) { think = (vis.slice(0, ci) + '\n' + think).trim(); vis = vis.slice(ci).replace(/<\/think(ing)?>/i, ''); }
+  return { think: think.trim(), text: vis.replace(/^\s+/, '') };
+}
+// files and pictures sent earlier in a chat are referenced by id; here they are put back so the model can see them again
+const REF_IMG = /^mundora-img:([A-Za-z0-9]{16,40})$/, REF_FILE = /\[\[mundora-file:([A-Za-z0-9]{16,40})\]\]/g;
+const refImgId = x => { const m = x && x.type === 'image_url' && REF_IMG.exec(String((x.image_url && x.image_url.url) || '')); return m ? m[1] : ''; };
+async function resolveRefs(uid, messages) {
+  const imgIds = [], fileIds = [];
+  for (const m of messages) {
+    const parts = typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : m.content;
+    for (const x of parts) { const id = refImgId(x); if (id) imgIds.push(id); if (x.type === 'text') for (const f of String(x.text).matchAll(REF_FILE)) fileIds.push(f[1]); }
+  }
+  const I = [...new Set(imgIds.slice(-4))], F = [...new Set(fileIds)].slice(-12);   // the 4 newest earlier pictures
+  if (!I.length && !F.length) return messages;
+  const res = await redis([...I.map(id => ['ZSCORE', 'u:' + uid + ':imgs', id]), ...I.map(id => ['GET', 'img:' + id]), ...F.map(id => ['ZSCORE', 'u:' + uid + ':files', id]), ...F.map(id => ['GET', 'ftx:' + id])]).catch(() => []);
+  const img = {}, file = {}, o = I.length * 2;
+  I.forEach((id, k) => { if (res[k] != null && res[I.length + k]) img[id] = res[I.length + k]; });
+  F.forEach((id, k) => { if (res[o + k] != null && res[o + F.length + k] != null) file[id] = String(res[o + F.length + k]); });
+  let budget = 150000;   // characters of earlier files per request
+  const fix = t => String(t).replace(REF_FILE, (_, id) => { const tx = file[id]; if (tx == null || budget <= 0) return '(the file is no longer available)'; const cut = tx.slice(0, budget); budget -= cut.length; return cut; });
+  return messages.map(m => {
+    if (typeof m.content === 'string') return Object.assign({}, m, { content: fix(m.content) });
+    return Object.assign({}, m, { content: m.content.map(x => { if (x.type === 'text') return { type: 'text', text: fix(x.text) }; const id = refImgId(x); if (!id) return x; return img[id] ? { type: 'image_url', image_url: { url: img[id] } } : { type: 'text', text: '(an earlier picture is not shown)' }; }) });
+  });
+}
 const SUPPORT = 'mundoraaiapp@gmail.com';
 const ADMIN_ACTIONS = ['plan', 'tokens', 'freeze', 'delete', 'restore', 'reset', 'disc'];
 const now = () => Date.now();
@@ -293,7 +325,9 @@ function streamJSON(work) {
 }
 
 
-export default async function handler(req) {
+export default async function handler(req, ctx) {
+  // lets an answer keep being written after the browser is closed (Vercel waits for it, up to 300 s)
+  const keepAlive = ctx && typeof ctx.waitUntil === 'function' ? pr => ctx.waitUntil(pr) : () => {};
   const base = (process.env.AI_BASE || '').trim().replace(/\/+$/, '');
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
@@ -308,7 +342,7 @@ export default async function handler(req) {
     const bin = Uint8Array.from(atob(m[2]), c => c.charCodeAt(0));
     return new Response(bin, { headers: { 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
   }
-  if (p === 'health') return json({ ok: true, version: 24, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 25, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
@@ -866,7 +900,7 @@ export default async function handler(req) {
     const model = String(body.model || '');
     if (!/^(claude|gpt|chatgpt)/i.test(model.split('/').pop())) return err('Model not allowed', 400);
     // a message is text, or (for attachments) a list of text and image parts
-    const okPart = x => x && ((x.type === 'text' && typeof x.text === 'string') || (x.type === 'image_url' && x.image_url && /^(data:image\/|https:)/.test(String(x.image_url.url || ''))));
+    const okPart = x => x && ((x.type === 'text' && typeof x.text === 'string') || (x.type === 'image_url' && x.image_url && /^(data:image\/|https:|mundora-img:)/.test(String(x.image_url.url || ''))));
     let messages = (Array.isArray(body.messages) ? body.messages : [])
       .filter(m => m && /^(system|user|assistant)$/.test(m.role) && (typeof m.content === 'string' || (Array.isArray(m.content) && m.content.length && m.content.every(okPart)))).slice(-40);
     const textOf = m => typeof m.content === 'string' ? m.content : m.content.filter(x => x.type === 'text').map(x => x.text).join('\n');
@@ -909,7 +943,11 @@ export default async function handler(req) {
       }
     }
 
+    if (hasStore()) messages = await resolveRefs(u.uid, messages);
+    else messages = messages.map(m => typeof m.content === 'string' ? m : Object.assign({}, m, { content: m.content.filter(x => !refImgId(x)) }));
     const stream = body.stream !== false;
+    const job = hasStore() && stream && JOB_RE.test(String(body.job || '')) ? String(body.job) : '';
+    const convId = /^[\w-]{4,40}$/.test(String(body.conv || '')) ? String(body.conv) : '';
     const payload = { model, messages, stream };
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     const question = lastUser ? textOf(lastUser) : '';
@@ -925,7 +963,9 @@ export default async function handler(req) {
     // tokens: everything the model reads (instructions, memory, the whole chat) + the answer
     const inTok = messages.reduce((n, m) => n + countTokens(textOf(m)) + imgCount(m) * 1000, 0);
     const mx = modelX(model), pre = mx * costFor(plan, inTok);
-    const r = await upstream(base, key, payload, req.signal);
+    const upAbort = new AbortController();
+    if (!job) req.signal && req.signal.addEventListener('abort', () => upAbort.abort(), { once: true });
+    const r = await upstream(base, key, payload, upAbort.signal);
     if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
 
     const ct = r.headers.get('content-type') || '';
@@ -938,31 +978,107 @@ export default async function handler(req) {
 
     // charge the input right away (so a stopped answer is still counted), the rest when the stream ends
     charge(u, pre, false);
+    const JK = 'job:' + job, t0 = Date.now();
+    const jobSave = (status, raw, native) => redis([['SET', JK, JSON.stringify({ uid: u.uid, status, raw, think: native, model, conv: convId, t: t0, at: Date.now() }), 'EX', 86400]]);
+    if (job) await jobSave('run', '', '').catch(() => {});
     const dec = new TextDecoder();
-    let buf = '', answer = '';
-    const ts = new TransformStream({
-      transform(chunk, ctrl) {
-        ctrl.enqueue(chunk);
-        buf += dec.decode(chunk, { stream: true });
-        let i;
-        while ((i = buf.indexOf('\n')) >= 0) {
-          const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-          if (!line.startsWith('data:')) continue;
-          const d = line.slice(5).trim(); if (d === '[DONE]') continue;
+    let ctrl = null, gone = false;
+    const out = new ReadableStream({ start(c) { ctrl = c; }, cancel() { gone = true; } });
+    // one loop reads the model: it passes everything to the browser while it's there,
+    // and keeps going (saving the answer) if the browser is closed
+    const work = (async () => {
+      let buf = '', raw = '', native = '', status = 'done', lastSave = Date.now();
+      const reader = r.body.getReader();
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (!gone) { try { ctrl.enqueue(value); } catch (e) { gone = true; } }
+          buf += dec.decode(value, { stream: true });
+          let i;
+          while ((i = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+            if (!line.startsWith('data:')) continue;
+            const d = line.slice(5).trim(); if (d === '[DONE]') continue;
+            try {
+              const j = JSON.parse(d);
+              const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+              if (typeof dl.content === 'string') raw += dl.content;
+              const rr = dl.reasoning_content || dl.reasoning || dl.thinking;
+              if (typeof rr === 'string') native += rr;
+            } catch (e) {}
+          }
+          // while nobody watches, save what's written so far (rarely, to keep the database calm)
+          if (job && Date.now() - lastSave > (gone ? 2500 : 8000)) {
+            lastSave = Date.now();
+            const [, stop] = await redis([['SET', JK, JSON.stringify({ uid: u.uid, status: 'run', raw, think: native, model, conv: convId, t: t0, at: Date.now() }), 'EX', 86400], ['GET', JK + ':stop']]).catch(() => []);
+            if (stop) { status = 'stopped'; upAbort.abort(); break; }
+          }
+        }
+      } catch (e) { status = raw || native ? 'done' : 'error'; }
+      try { ctrl.close(); } catch (e) {}
+      await charge(u, Math.max(0, mx * costFor(plan, inTok + countTokens(raw + native)) - pre), build && raw.length > 0).catch(() => {});
+      if (job) {
+        await jobSave(status, raw, native).catch(() => {});
+        // put the finished answer into the saved chat, so it's there on every device even if the site is closed
+        if (convId && status !== 'error') {
           try {
-            const j = JSON.parse(d);
-            const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
-            if (typeof dl.content === 'string') answer += dl.content;
-            const rr = dl.reasoning_content || dl.reasoning || dl.thinking;
-            if (typeof rr === 'string') answer += rr;
+            const CK = 'u:' + u.uid + ':conv:' + convId;
+            const [c] = await redis([['GET', CK]]);
+            const conv = parseJ(c, null);
+            const m = conv && Array.isArray(conv.messages) && conv.messages.find(x => x && x.job === job);
+            if (m && m.pending) {
+              const sp = splitThinkS(raw);
+              m.text = sp.text; m.think = (native.trim() + (native.trim() && sp.think ? '\n' : '') + sp.think).trim().slice(0, 12000);
+              if (m.think) m.thinkMs = Math.min(Date.now() - t0, 600000);
+              if (status === 'stopped') m.stopped = true;
+              delete m.pending; conv.updated = Date.now();
+              const full = JSON.stringify(conv);
+              if (full.length <= CONV_MAX) {
+                const [meta] = await redis([['HGET', 'u:' + u.uid + ':convs', convId]]);
+                const mt = parseJ(meta, null);
+                const cmds = [['SET', CK, full]];
+                if (mt) { mt.updated = conv.updated; cmds.push(['HSET', 'u:' + u.uid + ':convs', convId, JSON.stringify(mt)]); }
+                await redis(cmds);
+              }
+            }
           } catch (e) {}
         }
-      },
-      async flush() {
-        await charge(u, Math.max(0, mx * costFor(plan, inTok + countTokens(answer)) - pre), build && answer.length > 0);
       }
-    });
-    return new Response(r.body.pipeThrough(ts), { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } });
+    })();
+    keepAlive(work);
+    return new Response(out, { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } });
+  }
+
+  /* ---- answers written in the background ---- */
+  if (p === 'job' && req.method === 'GET') {
+    const id = String(new URL(req.url).searchParams.get('id') || '');
+    if (!JOB_RE.test(id) || !hasStore()) return err('Not found', 404);
+    const [j] = await redis([['GET', 'job:' + id]]);
+    const o = parseJ(j, null);
+    if (!o || o.uid !== u.uid) return err('Not found', 404, { code: 'nojob' });
+    return json({ status: o.status, raw: o.raw || '', think: o.think || '', model: o.model, at: o.at });
+  }
+  if (p === 'job-stop' && req.method === 'POST') {
+    const b = await req.json().catch(() => ({}));
+    const id = String(b.id || '');
+    if (!JOB_RE.test(id) || !hasStore()) return json({ ok: false });
+    await redis([['SET', 'job:' + id + ':stop', 1, 'EX', 600]]);
+    return json({ ok: true });
+  }
+  /* ---- text files attached to a chat, kept so the model can read them again later ---- */
+  if (p === 'file-put' && req.method === 'POST') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const b = await req.json().catch(() => null);
+    const text = String((b && b.text) || '');
+    if (!text || text.length > 200000) return err('Bad file', 400);
+    const id = rid(24), key = 'u:' + u.uid + ':files';
+    const [, , n] = await redis([['SET', 'ftx:' + id, text], ['ZADD', key, now(), id], ['ZCARD', key]]);
+    if (+n > 200) {
+      const [old] = await redis([['ZRANGE', key, 0, +n - 201]]);
+      if (old && old.length) await redis([['DEL', ...old.map(x => 'ftx:' + x)], ['ZREM', key, ...old]]);
+    }
+    return json({ id });
   }
 
   return err('Not found', 404);
