@@ -289,7 +289,7 @@ export default async function handler(req) {
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
   // open https://<site>/api/ai?p=health in a browser to check the server setup
-  if (p === 'health') return json({ ok: true, version: 16, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 17, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
@@ -402,6 +402,93 @@ export default async function handler(req) {
       const sale = { percent: pc, plans: b.plans || 'all', until: +b.until || 0, text: { en: String(b.text_en || '').slice(0, 140), ru: String(b.text_ru || '').slice(0, 140), uk: String(b.text_uk || '').slice(0, 140) } };
       await redis([['SET', 'cfg:sale', JSON.stringify(sale)]]);
       return json({ sale });
+    }
+    return err('Not found', 404);
+  }
+
+
+  /* ================= SUPPORT TICKETS =================
+     A user writes to support; every admin sees new tickets. The first admin who answers takes the ticket:
+     after that only he sees it and writes in it. Admins change the status (in progress / answered / closed). */
+  if (p && p.startsWith('tk-')) {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const b = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const qid = String(new URL(req.url).searchParams.get('id') || b.id || '').slice(0, 40);
+    const getT = async id => { const [v] = await redis([['GET', 'tk:' + id]]); return parseJ(v, null); };
+    const putT = t => redis([['SET', 'tk:' + t.id, JSON.stringify(t)], ['ZADD', 'tks', t.updated, t.id], ['ZADD', 'u:' + t.uid + ':tks', t.updated, t.id]]);
+    const meta = (t, forAdmin) => ({ id: t.id, subject: t.subject, status: t.status, created: t.created, updated: t.updated, last: t.messages.length ? t.messages[t.messages.length - 1].from : 'user',
+      unread: forAdmin ? !t.seenAdmin : !t.seenUser, email: forAdmin ? t.email : undefined, name: forAdmin ? t.name : undefined, mine: forAdmin ? t.claimedBy === u.uid : undefined, claimed: forAdmin ? !!t.claimedBy : undefined, n: t.messages.length });
+    const visibleToAdmin = t => admin && (!t.claimedBy || t.claimedBy === u.uid);
+    const cleanText = x => String(x || '').trim().slice(0, 4000);
+    const [myName] = await redis([['GET', 'u:' + u.uid + ':name']]);
+
+    if (p === 'tk-new' && req.method === 'POST') {
+      const subject = String(b.subject || '').trim().slice(0, 120), text = cleanText(b.text);
+      if (!subject || !text) return err('Write a subject and a message', 400, { code: 'empty' });
+      const [ids] = await redis([['ZREVRANGE', 'u:' + u.uid + ':tks', 0, 30]]);
+      const open = ids && ids.length ? (await redis(ids.map(id => ['GET', 'tk:' + id]))).map(v => parseJ(v, null)).filter(t => t && t.status !== 'closed').length : 0;
+      if (open >= 5) return err('Too many open tickets', 429, { code: 'toomany' });
+      const id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const t = { id, uid: u.uid, email: u.email, name: myName || u.name || '', subject, status: 'open', created: now(), updated: now(), claimedBy: null, claimedName: null, seenUser: true, seenAdmin: false,
+        messages: [{ from: 'user', name: myName || u.name || '', text, at: now() }] };
+      await putT(t);
+      return json(t);
+    }
+    if (p === 'tk-mine' && req.method === 'GET') {
+      const [ids] = await redis([['ZREVRANGE', 'u:' + u.uid + ':tks', 0, 99]]);
+      const list = ids && ids.length ? (await redis(ids.map(id => ['GET', 'tk:' + id]))).map(v => parseJ(v, null)).filter(Boolean).map(t => meta(t, false)) : [];
+      return json({ list });
+    }
+    if (p === 'tk-all' && req.method === 'GET') {
+      if (!admin) return err('Not allowed', 403, { code: 'notadmin' });
+      const [ids] = await redis([['ZREVRANGE', 'tks', 0, 299]]);
+      const list = ids && ids.length ? (await redis(ids.map(id => ['GET', 'tk:' + id]))).map(v => parseJ(v, null)).filter(t => t && visibleToAdmin(t)).map(t => meta(t, true)) : [];
+      return json({ list });
+    }
+    if (p === 'tk-get' && req.method === 'GET') {
+      const t = await getT(qid);
+      if (!t || !(t.uid === u.uid || visibleToAdmin(t))) return err('Not found', 404, { code: 'notfound' });
+      const asAdmin = t.uid !== u.uid;
+      if (asAdmin && !t.seenAdmin) { t.seenAdmin = true; await redis([['SET', 'tk:' + t.id, JSON.stringify(t)]]); }
+      if (!asAdmin && !t.seenUser) { t.seenUser = true; await redis([['SET', 'tk:' + t.id, JSON.stringify(t)]]); }
+      return json(Object.assign({}, t, { asAdmin, canWrite: !asAdmin || !t.claimedBy || t.claimedBy === u.uid }));
+    }
+    if (p === 'tk-msg' && req.method === 'POST') {
+      const t = await getT(qid), text = cleanText(b.text);
+      if (!t || !text) return err('Not found', 404, { code: 'notfound' });
+      if (t.uid === u.uid && !(admin && b.asAdmin)) {
+        t.messages.push({ from: 'user', name: myName || t.name, text, at: now() });
+        t.status = 'open'; t.seenAdmin = false;
+      } else {
+        if (!admin) return err('Not allowed', 403, { code: 'notadmin' });
+        if (t.claimedBy && t.claimedBy !== u.uid) return err('Another admin is answering this ticket', 409, { code: 'claimed' });
+        if (!t.claimedBy) { t.claimedBy = u.uid; t.claimedName = myName || u.email; }
+        t.messages.push({ from: 'admin', name: myName || 'Mundora', text, at: now() });
+        t.status = 'answered'; t.seenUser = false; t.seenAdmin = true;
+      }
+      t.messages = t.messages.slice(-150); t.updated = now();
+      await putT(t);
+      return json(Object.assign({}, t, { asAdmin: t.uid !== u.uid, canWrite: true }));
+    }
+    if (p === 'tk-status' && req.method === 'POST') {
+      if (!admin) return err('Not allowed', 403, { code: 'notadmin' });
+      const t = await getT(qid);
+      if (!t || !visibleToAdmin(t)) return err('Not found', 404, { code: 'notfound' });
+      if (!['open', 'answered', 'closed'].includes(b.status)) return err('Bad status', 400);
+      t.status = b.status; t.updated = now(); if (b.status !== 'open') t.seenUser = false;
+      await putT(t);
+      return json(Object.assign({}, t, { asAdmin: true, canWrite: !t.claimedBy || t.claimedBy === u.uid }));
+    }
+    if (p === 'tk-count' && req.method === 'GET') {
+      const [mine] = await redis([['ZREVRANGE', 'u:' + u.uid + ':tks', 0, 50]]);
+      const ts = mine && mine.length ? (await redis(mine.map(id => ['GET', 'tk:' + id]))).map(v => parseJ(v, null)).filter(Boolean) : [];
+      let forAdmin = 0;
+      if (admin) {
+        const [ids] = await redis([['ZREVRANGE', 'tks', 0, 200]]);
+        const all = ids && ids.length ? (await redis(ids.map(id => ['GET', 'tk:' + id]))).map(v => parseJ(v, null)).filter(t => t && visibleToAdmin(t) && t.uid !== u.uid) : [];
+        forAdmin = all.filter(t => !t.seenAdmin && t.status !== 'closed').length;
+      }
+      return json({ user: ts.filter(t => !t.seenUser).length, admin: forAdmin });
     }
     return err('Not found', 404);
   }
