@@ -13,14 +13,15 @@ export const config = { runtime: 'edge' };
 const PROJECT = 'mundora-78';
 const FB_KEY = 'AIzaSyDl_HsF96Rz52BUISG6cYeXg_6joZkMxXk'; // public Firebase web key
 
-// Limits per plan: w = tokens per 5-hour window (0 = no window limit), m = tokens per month
+// Limits per plan, like Claude: w = tokens per 5-hour window, m = tokens per week (7 days from the first request)
 const PLANS = {
-  spark:  { w: 2e6, m: 15e6 },
-  orbit:  { w: 0,   m: 30e6 },
-  nova:   { w: 0,   m: 100e6 },
-  cosmos: { w: 0,   m: 300e6 }
+  spark:  { w: 150e3, m: 1e6 },
+  orbit:  { w: 500e3, m: 3.5e6 },
+  nova:   { w: 1.5e6, m: 10e6 },
+  cosmos: { w: 4e6,   m: 28e6 }
 };
-const INVITE_BONUS = { w: 250e3, m: 3e6 }; // for every confirmed invite after the first two
+const WEEK_SEC = 7 * 86400;
+const INVITE_BONUS = { w: 50e3, m: 300e3 }; // for every confirmed invite after the first two
 const WINDOW_SEC = 5 * 3600;
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -91,9 +92,9 @@ const isAdmin = (u, verified) => !!(u.email && verified && admins().includes(nor
 
 async function account(u) {
   const P = 'u:' + u.uid, M = ym();
-  const [w, wttl, m, b, planRaw, inv, extra, bonus, ev] = await redis([
-    ['GET', P + ':w'], ['PTTL', P + ':w'], ['GET', P + ':m:' + M], ['GET', P + ':b'],
-    ['GET', P + ':plan'], ['SCARD', P + ':inv'], ['GET', P + ':x:' + M], ['GET', P + ':bonus'], ['GET', P + ':ev']
+  const [w, wttl, m, b, planRaw, inv, mttl, bonus, ev] = await redis([
+    ['GET', P + ':w'], ['PTTL', P + ':w'], ['GET', P + ':wk'], ['GET', P + ':b'],
+    ['GET', P + ':plan'], ['SCARD', P + ':inv'], ['PTTL', P + ':wk'], ['GET', P + ':bonus'], ['GET', P + ':ev']
   ]);
   let plan = 'spark';
   try { const pr = planRaw ? JSON.parse(planRaw) : null; if (pr && PLANS[pr.id] && (!pr.until || pr.until > Date.now())) plan = pr.id; } catch (e) {}
@@ -102,8 +103,8 @@ async function account(u) {
   const L = PLANS[plan], over = Math.max(0, (+inv || 0) - 2);
   return {
     plan,
-    w: { used: +w || 0, total: L.w ? L.w + over * INVITE_BONUS.w : 0, resetAt: wttl > 0 ? Date.now() + wttl : null },
-    m: { used: +m || 0, total: L.m + over * INVITE_BONUS.m + (+extra || 0), resetAt: nextMonth() },
+    w: { used: +w || 0, total: L.w + over * INVITE_BONUS.w, resetAt: wttl > 0 ? Date.now() + wttl : null },
+    m: { used: +m || 0, total: L.m + over * INVITE_BONUS.m, resetAt: mttl > 0 ? Date.now() + mttl : null },
     builds: +b || 0, invites: +inv || 0, bonus: Math.max(0, +bonus || 0), verified
   };
 }
@@ -118,7 +119,7 @@ async function charge(u, n, build) {
       if (left < 0) { rest = Math.min(n, -left); await redis([['INCRBY', P + ':bonus', -left]]); } else rest = 0;
     }
     const cmds = [];
-    if (rest > 0) cmds.push(['SET', P + ':w', 0, 'EX', WINDOW_SEC, 'NX'], ['INCRBY', P + ':w', rest], ['SET', P + ':m:' + M, 0, 'EX', 40 * 86400, 'NX'], ['INCRBY', P + ':m:' + M, rest]);
+    if (rest > 0) cmds.push(['SET', P + ':w', 0, 'EX', WINDOW_SEC, 'NX'], ['INCRBY', P + ':w', rest], ['SET', P + ':wk', 0, 'EX', WEEK_SEC, 'NX'], ['INCRBY', P + ':wk', rest]);
     if (build) cmds.push(['INCR', P + ':b']);
     if (cmds.length) await redis(cmds);
   } catch (e) {}
@@ -195,23 +196,100 @@ const ADMIN_ACTIONS = ['plan', 'tokens', 'freeze', 'delete', 'restore', 'reset',
 const now = () => Date.now();
 const parseJ = (v, d) => { try { return v ? JSON.parse(v) : d; } catch (e) { return d; } };
 // Which models are only for paid plans (Orbit and higher). The admin can change this per model in the admin panel.
-const IMAGE_RE = /(gpt-image|dall-e-3|imagen|flux|recraft|ideogram|seedream|nano-banana|image-preview|-image-|stable-diffusion|sdxl|midjourney)/i;
+const IMAGE_RE = /(gpt-image|dall-e-3|imagen|flux|recraft|ideogram|seedream|nano-banana|image|stable-diffusion|sdxl|midjourney|kandinsky)/i;
 const isImageModel = id => IMAGE_RE.test(String(id || '')) && !/dall-e-2/i.test(id);
 // For now every model is free on every plan; the admin panel can still mark a model as paid.
 const defaultPremium = id => false;
 async function modelRules() { try { const [v] = await redis([['GET', 'cfg:models']]); return parseJ(v, {}) || {}; } catch (e) { return {}; } }
 const isPremium = (id, rules) => rules && rules[id] ? rules[id] === 'premium' : defaultPremium(id);
-const IMAGE_TOKENS = 40000;      // one generated image costs this many tokens from the limits
+const IMAGE_TOKENS = 10000;      // one generated image costs this many tokens from the limits
 const ATTACH_MB = { spark: 25, orbit: 100, nova: 250, cosmos: 500 };
 const activeSale = s => s && s.percent > 0 && (!s.until || s.until > now()) ? s : null;
 const MODEL_CACHE = { at: 0, body: null };
+
+/* ---------- picture generation through the model API ---------- */
+// 1) /images/generations with an image model, 2) /responses with the image tool on a GPT model,
+// 3) /chat/completions with image output on a GPT model
+async function imageWays(base, key, chatModel, saved, all) {
+  let ids = [];
+  try {
+    if (!(MODEL_CACHE.body && Date.now() - MODEL_CACHE.at < 600e3)) {
+      const r = await fetch(base + '/models', { headers: { authorization: 'Bearer ' + key } });
+      if (r.ok) { MODEL_CACHE.body = await r.text(); MODEL_CACHE.at = Date.now(); }
+    }
+    const j = parseJ(MODEL_CACHE.body, {});
+    ids = (Array.isArray(j) ? j : (j.data || j.models || [])).map(m => typeof m === 'string' ? m : m && (m.id || m.name)).filter(Boolean);
+  } catch (e) {}
+  const imgIds = ids.filter(isImageModel).sort((a, b) => (/gpt-image/i.test(b) ? 1 : 0) - (/gpt-image/i.test(a) ? 1 : 0) || b.localeCompare(a, 'en', { numeric: true }));
+  const gpts = ids.filter(id => /^(chat)?gpt-?\d/i.test(id.split('/').pop()) && !isImageModel(id) && !/(audio|realtime|tts|transcri|search)/i.test(id));
+  gpts.sort((a, b) => b.localeCompare(a, 'en', { numeric: true }));
+  const chat = chatModel && gpts.includes(chatModel) ? chatModel : (chatModel || gpts[0] || '');
+  const list = [];
+  imgIds.slice(0, all ? 4 : 2).forEach(m => list.push({ kind: 'images', model: m }));
+  if (!imgIds.length) ['gpt-image-1', 'dall-e-3'].forEach(m => list.push({ kind: 'images', model: m }));
+  if (chat) { list.push({ kind: 'responses', model: chat }); list.push({ kind: 'chat', model: chat }); }
+  if (saved && saved.kind) list.unshift({ kind: saved.kind, model: saved.kind === 'images' ? saved.model : (chat || saved.model) });
+  const seen = new Set();
+  return list.filter(w => { const k = w.kind + w.model; if (seen.has(k)) return false; seen.add(k); return true; });
+}
+async function tryImageWay(base, key, w, prompt, signal, timeout) {
+  const ctl = new AbortController();
+  const tm = setTimeout(() => ctl.abort(), timeout || 90000);
+  if (signal) signal.addEventListener('abort', () => ctl.abort());
+  const post = (path, body) => fetch(base + path, { method: 'POST', headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal });
+  const fail = async (r, what) => ({ ok: false, detail: what + ' → HTTP ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 160) });
+  try {
+    if (w.kind === 'images') {
+      let r = await post('/images/generations', { model: w.model, prompt, n: 1, size: '1024x1024' });
+      if (r.status === 400) r = await post('/images/generations', { model: w.model, prompt, n: 1 });
+      if (!r.ok) return await fail(r, '/images/generations');
+      const j = await r.json().catch(() => ({}));
+      const images = (j.data || []).map(d => d.url ? { url: d.url } : d.b64_json ? { b64: d.b64_json } : null).filter(Boolean);
+      return images.length ? { ok: true, images } : { ok: false, detail: 'no image in the answer' };
+    }
+    if (w.kind === 'responses') {
+      const r = await post('/responses', { model: w.model, input: prompt, tools: [{ type: 'image_generation' }] });
+      if (!r.ok) return await fail(r, '/responses');
+      const j = await r.json().catch(() => ({}));
+      const images = (j.output || []).filter(o => o && o.type === 'image_generation_call' && o.result).map(o => ({ b64: o.result }));
+      return images.length ? { ok: true, images } : { ok: false, detail: '/responses answered without a picture' };
+    }
+    if (w.kind === 'chat') {
+      const r = await post('/chat/completions', { model: w.model, modalities: ['image', 'text'], messages: [{ role: 'user', content: 'Generate an image: ' + prompt }] });
+      if (!r.ok) return await fail(r, '/chat/completions');
+      const j = await r.json().catch(() => ({}));
+      const msg = j.choices && j.choices[0] && j.choices[0].message || {};
+      const found = [];
+      (msg.images || []).forEach(x => { const u = x && (x.image_url && x.image_url.url || x.url); if (u) found.push(u); });
+      if (Array.isArray(msg.content)) msg.content.forEach(x => { const u = x && (x.image_url && x.image_url.url || (x.type === 'output_image' && (x.image_url || x.url))); if (u) found.push(u); if (x && x.b64_json) found.push('data:image/png;base64,' + x.b64_json); });
+      if (typeof msg.content === 'string') { const m = msg.content.match(/(data:image\/[a-z]+;base64,[A-Za-z0-9+/=]{200,})|(https?:\/\/\S+\.(?:png|jpe?g|webp)(?:\?\S*)?)/i); if (m) found.push(m[0]); }
+      const images = found.map(u => /^data:/.test(u) ? { b64: u.replace(/^data:image\/[a-z]+;base64,/i, '') } : { url: u });
+      return images.length ? { ok: true, images } : { ok: false, detail: '/chat/completions answered with text only' };
+    }
+    return { ok: false, detail: 'unknown way' };
+  } catch (e) { return { ok: false, detail: e && e.name === 'AbortError' ? 'timeout' : String(e && e.message || e) }; }
+  finally { clearTimeout(tm); }
+}
+function streamJSON(work) {
+  const enc = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(ctrl) {
+      const ping = setInterval(() => { try { ctrl.enqueue(enc.encode(' ')); } catch (e) {} }, 5000);
+      let out;
+      try { out = await work(); } catch (e) { out = { error: { message: String(e && e.message || e) } }; }
+      clearInterval(ping);
+      ctrl.enqueue(enc.encode(JSON.stringify(out))); ctrl.close();
+    }
+  });
+  return new Response(stream, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+}
 
 export default async function handler(req) {
   const base = (process.env.AI_BASE || '').trim().replace(/\/+$/, '');
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
   // open https://<site>/api/ai?p=health in a browser to check the server setup
-  if (p === 'health') return json({ ok: true, version: 13, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 16, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
@@ -286,7 +364,7 @@ export default async function handler(req) {
       }
       if (b.action === 'freeze' || b.action === 'delete') await redis([['SET', P + ':status', JSON.stringify({ s: b.action === 'freeze' ? 'frozen' : 'deleted', at: now(), reason: String(b.reason || '').slice(0, 200) })]]);
       if (b.action === 'restore') await redis([['DEL', P + ':status']]);
-      if (b.action === 'reset') await redis([['DEL', P + ':w'], ['DEL', P + ':m:' + ym()]]);
+      if (b.action === 'reset') await redis([['DEL', P + ':w'], ['DEL', P + ':wk']]);
       return json(await userCard(uid));
     }
     if (p === 'admin-promos' && req.method === 'GET') {
@@ -467,7 +545,7 @@ export default async function handler(req) {
 
   if (p === 'usage' && req.method === 'GET') {
     const refCode = await refCodeOf(u.uid);
-    if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, attachMB: ATTACH_MB[pl], needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: nextMonth() }, builds: 0, invites: 0, bonus: 0 }); }
+    if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, attachMB: ATTACH_MB[pl], needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: null }, builds: 0, invites: 0, bonus: 0 }); }
     const name = String(new URL(req.url).searchParams.get('n') || u.name || '').slice(0, 60);
     redis([['SET', 'rc:' + refCode, u.uid, 'NX'], ['SET', 'em:' + normEmail(u.email), u.uid], ['SET', 'u:' + u.uid + ':email', u.email], ['SET', 'u:' + u.uid + ':name', name], ['SET', 'u:' + u.uid + ':seen', now()], ['SADD', 'users', u.uid]]).catch(() => {});
     const acc = await account(u);
@@ -548,31 +626,64 @@ export default async function handler(req) {
     return json({ ok: true });
   }
 
+  /* ---- pictures: every way your API might draw, tried in turn; the one that works is remembered ---- */
   if (p === 'image' && req.method === 'POST') {
     const b = await req.json().catch(() => ({}));
-    const model = String(b.model || ''), prompt = String(b.prompt || '').slice(0, 4000);
-    if (!isImageModel(model) || !prompt) return err('Bad request', 400);
+    const prompt = String(b.prompt || '').slice(0, 4000);
+    const chatModel = String(b.chatModel || '');
+    if (!prompt) return err('Bad request', 400);
     let acc = null;
     if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
     if (hasStore()) {
       try { acc = await account(u); } catch (e) {}
       if (acc && needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
-      if (acc && !admin && acc.plan === 'spark' && isPremium(model, await modelRules())) return err('Image generation is for paid plans', 403, { code: 'premium' });
       if (acc && !(acc.bonus > 0)) {
         if (acc.w.total && acc.w.used >= acc.w.total) return err('5-hour limit reached', 429, { code: 'limit', which: 'w', resetAt: acc.w.resetAt });
-        if (acc.m.used >= acc.m.total) return err('Monthly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
+        if (acc.m.used >= acc.m.total) return err('Weekly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
       }
     }
-    const size = /^\d{3,4}x\d{3,4}$/.test(b.size || '') ? b.size : '1024x1024';
-    const send = pl => fetch(base + '/images/generations', { method: 'POST', headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify(pl), signal: req.signal });
-    let r = await send({ model, prompt, n: 1, size });
-    if (r.status === 400) { const t = await r.text(); if (/size/i.test(t)) r = await send({ model, prompt, n: 1 }); else return new Response(t, { status: 400, headers: { 'content-type': 'application/json' } }); }
-    if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
-    const j = await r.json().catch(() => ({}));
-    const imgs = (j.data || []).map(d => d.url ? { url: d.url } : d.b64_json ? { b64: d.b64_json } : null).filter(Boolean);
-    if (!imgs.length) return err('The model returned no image', 502);
-    await charge(u, IMAGE_TOKENS * imgs.length, false);
-    return json({ images: imgs, revised: (j.data && j.data[0] && j.data[0].revised_prompt) || '' });
+    // the answer is streamed (spaces first, JSON at the end) so long drawings don't hit the 25-second limit
+    return streamJSON(async () => {
+      let way = null;
+      if (hasStore()) { try { const [v] = await redis([['GET', 'cfg:imgway']]); way = parseJ(v, null); } catch (e) {} }
+      const ways = await imageWays(base, key, chatModel, way);
+      for (const w of ways) {
+        const r = await tryImageWay(base, key, w, prompt, req.signal, 110000);
+        if (r.ok) {
+          if (hasStore() && (!way || way.kind !== w.kind || way.model !== w.model)) redis([['SET', 'cfg:imgway', JSON.stringify({ kind: w.kind, model: w.model, at: now() })]]).catch(() => {});
+          await charge(u, IMAGE_TOKENS, false);
+          return { images: r.images, via: w.kind + ':' + w.model };
+        }
+        if (way && way.kind === w.kind && way.model === w.model && hasStore()) redis([['DEL', 'cfg:imgway']]).catch(() => {});
+      }
+      return { error: { message: 'Your API could not draw this picture', code: 'noimg' } };
+    });
+  }
+  if (p === 'imgtest' && req.method === 'POST') {
+    if (!admin) return err('Not allowed', 403, { code: 'notadmin' });
+    const b = await req.json().catch(() => ({}));
+    const enc = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        const line = o => ctrl.enqueue(enc.encode(JSON.stringify(o) + '\n'));
+        const ping = setInterval(() => { try { ctrl.enqueue(enc.encode(' \n')); } catch (e) {} }, 5000);
+        try {
+          const ways = await imageWays(base, key, String(b.chatModel || ''), null, true);
+          line({ type: 'plan', ways: ways.map(w => w.kind + ' · ' + w.model) });
+          let first = null;
+          for (const w of ways) {
+            line({ type: 'try', way: w.kind + ' · ' + w.model });
+            const t0 = Date.now();
+            const r = await tryImageWay(base, key, w, 'a small red apple on a white table, photo', req.signal, 90000);
+            line({ type: 'result', way: w.kind + ' · ' + w.model, ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : r.detail, image: r.ok ? (r.images[0].url || ('data:image/png;base64,' + r.images[0].b64)) : null });
+            if (r.ok && !first) { first = w; if (hasStore()) await redis([['SET', 'cfg:imgway', JSON.stringify({ kind: w.kind, model: w.model, at: now() })]]).catch(() => {}); if (!b.all) break; }
+          }
+          line({ type: 'done', found: first ? first.kind + ' · ' + first.model : null });
+        } catch (e) { line({ type: 'done', found: null, error: String(e && e.message || e) }); }
+        clearInterval(ping); ctrl.close();
+      }
+    });
+    return new Response(stream, { headers: { 'content-type': 'application/x-ndjson', 'cache-control': 'no-store' } });
   }
 
   if (p === 'chat' && req.method === 'POST') {
@@ -597,7 +708,7 @@ export default async function handler(req) {
       if (acc && !admin && acc.plan === 'spark' && isPremium(model, await modelRules())) return err('This model is for paid plans', 403, { code: 'premium' });
       if (acc && !(acc.bonus > 0)) {
         if (acc.w.total && acc.w.used >= acc.w.total) return err('5-hour limit reached', 429, { code: 'limit', which: 'w', resetAt: acc.w.resetAt });
-        if (acc.m.used >= acc.m.total) return err('Monthly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
+        if (acc.m.used >= acc.m.total) return err('Weekly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
       }
     }
 
