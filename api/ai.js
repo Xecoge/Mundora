@@ -23,6 +23,8 @@ const PLANS = {
 const WEEK_SEC = 7 * 86400;
 // On the free plan every request costs at least 4 500 and at most 10 000 tokens:
 // a short question ≈ 5–6 K, a big task (a site, long code) = 10 K → about 3–6 requests per 5 hours.
+// some models spend the limits faster: Fable ×15; Opus, GPT-6.1 Sol and GPT-6 Astra ×3
+const modelX = id => { const s = String(id || '').toLowerCase(); if (/fable/.test(s)) return 15; if (/opus|astra|(^|[-_.])sol($|[-_.])/.test(s)) return 3; return 1; };
 const costFor = (plan, tok) => plan === 'spark' ? Math.min(10000, 4500 + Math.max(0, tok)) : Math.max(0, tok);
 const INVITE_BONUS = { w: 50e3, m: 300e3 }; // for every confirmed invite after the first two
 const WINDOW_SEC = 5 * 3600;
@@ -306,7 +308,7 @@ export default async function handler(req) {
     const bin = Uint8Array.from(atob(m[2]), c => c.charCodeAt(0));
     return new Response(bin, { headers: { 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
   }
-  if (p === 'health') return json({ ok: true, version: 23, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 24, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
@@ -922,7 +924,7 @@ export default async function handler(req) {
 
     // tokens: everything the model reads (instructions, memory, the whole chat) + the answer
     const inTok = messages.reduce((n, m) => n + countTokens(textOf(m)) + imgCount(m) * 1000, 0);
-    const pre = costFor(plan, inTok);
+    const mx = modelX(model), pre = mx * costFor(plan, inTok);
     const r = await upstream(base, key, payload, req.signal);
     if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
 
@@ -930,7 +932,7 @@ export default async function handler(req) {
     if (!r.body || !/event-stream/.test(ct)) {
       const j = await r.json().catch(() => ({}));
       const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      await charge(u, costFor(plan, inTok + countTokens(typeof c === 'string' ? c : '')), build);
+      await charge(u, mx * costFor(plan, inTok + countTokens(typeof c === 'string' ? c : '')), build);
       return json(j);
     }
 
@@ -957,7 +959,7 @@ export default async function handler(req) {
         }
       },
       async flush() {
-        await charge(u, Math.max(0, costFor(plan, inTok + countTokens(answer)) - pre), build && answer.length > 0);
+        await charge(u, Math.max(0, mx * costFor(plan, inTok + countTokens(answer)) - pre), build && answer.length > 0);
       }
     });
     return new Response(r.body.pipeThrough(ts), { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } });
