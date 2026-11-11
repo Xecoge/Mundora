@@ -15,12 +15,15 @@ const FB_KEY = 'AIzaSyDl_HsF96Rz52BUISG6cYeXg_6joZkMxXk'; // public Firebase web
 
 // Limits per plan, like Claude: w = tokens per 5-hour window, m = tokens per week (7 days from the first request)
 const PLANS = {
-  spark:  { w: 150e3, m: 1e6 },
+  spark:  { w: 30e3,  m: 180e3 },
   orbit:  { w: 500e3, m: 3.5e6 },
   nova:   { w: 1.5e6, m: 10e6 },
   cosmos: { w: 4e6,   m: 28e6 }
 };
 const WEEK_SEC = 7 * 86400;
+// On the free plan every request costs at least 4 500 and at most 10 000 tokens:
+// a short question ≈ 5–6 K, a big task (a site, long code) = 10 K → about 3–6 requests per 5 hours.
+const costFor = (plan, tok) => plan === 'spark' ? Math.min(10000, 4500 + Math.max(0, tok)) : Math.max(0, tok);
 const INVITE_BONUS = { w: 50e3, m: 300e3 }; // for every confirmed invite after the first two
 const WINDOW_SEC = 5 * 3600;
 
@@ -90,12 +93,13 @@ function normEmail(e) {
 const admins = () => (process.env.ADMIN_EMAILS || '').split(/[\s,;]+/).map(normEmail).filter(x => x.includes('@'));
 const isAdmin = (u, verified) => !!(u.email && verified && admins().includes(normEmail(u.email)));
 
-async function account(u) {
-  const P = 'u:' + u.uid, M = ym();
-  const [w, wttl, m, b, planRaw, inv, mttl, bonus, ev] = await redis([
+async function account(u, extra) {
+  const P = 'u:' + u.uid;
+  const res = await redis([
     ['GET', P + ':w'], ['PTTL', P + ':w'], ['GET', P + ':wk'], ['GET', P + ':b'],
     ['GET', P + ':plan'], ['SCARD', P + ':inv'], ['PTTL', P + ':wk'], ['GET', P + ':bonus'], ['GET', P + ':ev']
-  ]);
+  ].concat(extra || []));
+  const [w, wttl, m, b, planRaw, inv, mttl, bonus, ev] = res;
   let plan = 'spark';
   try { const pr = planRaw ? JSON.parse(planRaw) : null; if (pr && PLANS[pr.id] && (!pr.until || pr.until > Date.now())) plan = pr.id; } catch (e) {}
   const verified = u.verified || ev === '1' || ev === 1;
@@ -105,7 +109,7 @@ async function account(u) {
     plan,
     w: { used: +w || 0, total: L.w + over * INVITE_BONUS.w, resetAt: wttl > 0 ? Date.now() + wttl : null },
     m: { used: +m || 0, total: L.m + over * INVITE_BONUS.m, resetAt: mttl > 0 ? Date.now() + mttl : null },
-    builds: +b || 0, invites: +inv || 0, bonus: Math.max(0, +bonus || 0), verified
+    builds: +b || 0, invites: +inv || 0, bonus: Math.max(0, +bonus || 0), verified, extra: res.slice(9)
   };
 }
 async function charge(u, n, build) {
@@ -202,7 +206,7 @@ const isImageModel = id => IMAGE_RE.test(String(id || '')) && !/dall-e-2/i.test(
 const defaultPremium = id => false;
 async function modelRules() { try { const [v] = await redis([['GET', 'cfg:models']]); return parseJ(v, {}) || {}; } catch (e) { return {}; } }
 const isPremium = (id, rules) => rules && rules[id] ? rules[id] === 'premium' : defaultPremium(id);
-const IMAGE_TOKENS = 10000;      // one generated image costs this many tokens from the limits
+const IMAGE_TOKENS = 10000; // one picture      // one generated image costs this many tokens from the limits
 const ATTACH_MB = { spark: 25, orbit: 100, nova: 250, cosmos: 500 };
 const activeSale = s => s && s.percent > 0 && (!s.until || s.until > now()) ? s : null;
 const MODEL_CACHE = { at: 0, body: null };
@@ -284,19 +288,20 @@ function streamJSON(work) {
   return new Response(stream, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 }
 
+
 export default async function handler(req) {
   const base = (process.env.AI_BASE || '').trim().replace(/\/+$/, '');
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
   // open https://<site>/api/ai?p=health in a browser to check the server setup
-  if (p === 'health') return json({ ok: true, version: 17, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 21, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
 
   // account status (frozen / deleted) and admin rights
   let status = null, evFlag = null;
-  if (hasStore()) {
+  if (hasStore() && p !== 'chat') {
     try { const [st, ev] = await redis([['GET', 'u:' + u.uid + ':status'], ['GET', 'u:' + u.uid + ':ev']]); status = parseJ(st, null); evFlag = ev; } catch (e) {}
   }
   const admin = isAdmin(u, u.verified || evFlag === '1');
@@ -332,8 +337,20 @@ export default async function handler(req) {
       return json({ ok: true });
     }
     if (p === 'admin-stats' && req.method === 'GET') {
-      const [n] = await redis([['SCARD', 'users']]);
-      return json({ users: +n || 0 });
+      const t0 = now();
+      const [n, day, week, promos, sale, ids] = await redis([['SCARD', 'users'], ['ZCOUNT', 'users:seen', t0 - 86400e3, '+inf'], ['ZCOUNT', 'users:seen', t0 - 7 * 86400e3, '+inf'], ['HLEN', 'promos'], ['GET', 'cfg:sale'], ['ZREVRANGE', 'tks', 0, 200]]);
+      let tickets = 0;
+      if (ids && ids.length) { const ts = (await redis(ids.map(id => ['GET', 'tk:' + id]))).map(v => parseJ(v, null)); tickets = ts.filter(t => t && t.status === 'open' && (!t.claimedBy || t.claimedBy === u.uid)).length; }
+      return json({ users: +n || 0, day: +day || 0, week: +week || 0, promos: +promos || 0, sale: activeSale(parseJ(sale, null)), tickets });
+    }
+    if (p === 'admin-recent' && req.method === 'GET') {
+      const [ids] = await redis([['ZREVRANGE', 'users:seen', 0, 24]]);
+      if (!ids || !ids.length) return json({ list: [] });
+      const cmds = []; ids.forEach(id => cmds.push(['GET', 'u:' + id + ':email'], ['GET', 'u:' + id + ':name'], ['GET', 'u:' + id + ':seen'], ['GET', 'u:' + id + ':status'], ['GET', 'u:' + id + ':plan']));
+      const r = await redis(cmds);
+      const list = ids.map((id, i) => { const pl = parseJ(r[i * 5 + 4], null); return { uid: id, email: r[i * 5], name: r[i * 5 + 1], seen: +r[i * 5 + 2] || 0, status: parseJ(r[i * 5 + 3], null), plan: pl && PLANS[pl.id] && (!pl.until || pl.until > now()) ? pl.id : 'spark' }; });
+      list.forEach(x => { if (x.email && admins().includes(normEmail(x.email))) x.plan = 'cosmos'; });
+      return json({ list });
     }
     if (p === 'admin-find' && req.method === 'GET') {
       const q = String(new URL(req.url).searchParams.get('q') || '').trim();
@@ -493,6 +510,47 @@ export default async function handler(req) {
     return err('Not found', 404);
   }
 
+
+  /* ---- long-term memory ---- */
+  if (p === 'mem' && req.method === 'GET') {
+    if (!hasStore()) return json({ text: '', on: false });
+    const [m, off] = await redis([['GET', 'u:' + u.uid + ':mem'], ['GET', 'u:' + u.uid + ':memoff']]);
+    return json({ text: m || '', on: off !== '1' });
+  }
+  if (p === 'mem-set' && req.method === 'POST') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const b = await req.json().catch(() => ({}));
+    const cmds = [];
+    if (typeof b.on === 'boolean') cmds.push(b.on ? ['DEL', 'u:' + u.uid + ':memoff'] : ['SET', 'u:' + u.uid + ':memoff', '1']);
+    if (b.clear) cmds.push(['DEL', 'u:' + u.uid + ':mem']);
+    if (cmds.length) await redis(cmds);
+    return json({ ok: true });
+  }
+  if (p === 'mem-learn' && req.method === 'POST') {
+    if (!hasStore()) return json({ ok: false });
+    const b = await req.json().catch(() => ({}));
+    const q = String(b.q || '').slice(0, 2000), a = String(b.a || '').slice(0, 2500);
+    if (q.length < 12) return json({ ok: false });
+    const P = 'u:' + u.uid;
+    const [lock, off, cur] = await redis([['SET', P + ':memlock', 1, 'EX', 90, 'NX'], ['GET', P + ':memoff'], ['GET', P + ':mem']]);
+    if (lock !== 'OK' || off === '1') return json({ ok: false });
+    let ids = [];
+    try { const j = parseJ(MODEL_CACHE.body, {}); ids = (Array.isArray(j) ? j : (j.data || [])).map(m => typeof m === 'string' ? m : m && m.id).filter(Boolean); } catch (e) {}
+    const cheap = ids.find(id => /^(chat)?gpt.*(mini|nano)/i.test(id)) || ids.find(id => /haiku/i.test(id)) || ids.find(id => /sonnet/i.test(id)) || String(b.model || '');
+    if (!cheap) return json({ ok: false });
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 25000);
+    try {
+      const r = await fetch(base + '/chat/completions', { method: 'POST', signal: ctl.signal, headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify({ model: cheap, stream: false, max_tokens: 600, messages: [
+        { role: 'system', content: 'You keep a short long-term memory about one user of an AI assistant. Keep only durable, useful facts: name, language, job or studies, preferences, ongoing projects, goals, important personal context. No secrets like passwords or card numbers. At most 14 short bullet points, at most 1300 characters, written in the user\'s language. If the new exchange adds nothing durable, return the memory unchanged. Output only the memory.' },
+        { role: 'user', content: 'Current memory:\n' + (cur || '(empty)') + '\n\nNew exchange:\nUser: ' + q + '\nAssistant: ' + a } ] }) });
+      if (!r.ok) return json({ ok: false });
+      const j = await r.json().catch(() => ({}));
+      const out = String((j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '').trim().slice(0, 1600);
+      if (out.length > 5 && !/^\(empty\)$/i.test(out)) await redis([['SET', P + ':mem', out]]);
+      return json({ ok: true });
+    } catch (e) { return json({ ok: false }); } finally { clearTimeout(tm); }
+  }
+
   /* ---- email confirmation with a 6-digit code ---- */
   if (p === 'code-send' && req.method === 'POST') {
     if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
@@ -568,7 +626,8 @@ export default async function handler(req) {
     if (!c || !/^[\w-]{4,40}$/.test(String(c.id || ''))) return err('Bad request', 400);
     const full = JSON.stringify({ id: c.id, title: String(c.title || '').slice(0, 80), mode: c.mode, kind: c.kind || null, model: c.model, created: +c.created || Date.now(), updated: +c.updated || Date.now(), messages: Array.isArray(c.messages) ? c.messages.slice(-120) : [] });
     if (full.length > CONV_MAX) return err('Conversation is too large', 413);
-    const meta = JSON.stringify({ id: c.id, title: String(c.title || '').slice(0, 80), mode: c.mode, model: c.model, created: +c.created || Date.now(), updated: +c.updated || Date.now() });
+    const lastQ = (Array.isArray(c.messages) ? [...c.messages].reverse().find(m => m && m.role === 'user' && m.text) : null);
+    const meta = JSON.stringify({ id: c.id, title: String(c.title || '').slice(0, 80), mode: c.mode, model: c.model, created: +c.created || Date.now(), updated: +c.updated || Date.now(), last: lastQ ? String(lastQ.text).slice(0, 140) : '' });
     await redis([['SET', 'u:' + u.uid + ':conv:' + c.id, full], ['HSET', 'u:' + u.uid + ':convs', c.id, meta]]);
     return json({ ok: true });
   }
@@ -634,7 +693,7 @@ export default async function handler(req) {
     const refCode = await refCodeOf(u.uid);
     if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, attachMB: ATTACH_MB[pl], needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: null }, builds: 0, invites: 0, bonus: 0 }); }
     const name = String(new URL(req.url).searchParams.get('n') || u.name || '').slice(0, 60);
-    redis([['SET', 'rc:' + refCode, u.uid, 'NX'], ['SET', 'em:' + normEmail(u.email), u.uid], ['SET', 'u:' + u.uid + ':email', u.email], ['SET', 'u:' + u.uid + ':name', name], ['SET', 'u:' + u.uid + ':seen', now()], ['SADD', 'users', u.uid]]).catch(() => {});
+    redis([['SET', 'rc:' + refCode, u.uid, 'NX'], ['SET', 'em:' + normEmail(u.email), u.uid], ['SET', 'u:' + u.uid + ':email', u.email], ['SET', 'u:' + u.uid + ':name', name], ['SET', 'u:' + u.uid + ':seen', now()], ['SADD', 'users', u.uid], ['ZADD', 'users:seen', now(), u.uid]]).catch(() => {});
     const acc = await account(u);
     const [saleRaw, discRaw] = await redis([['GET', 'cfg:sale'], ['GET', 'u:' + u.uid + ':disc']]);
     const disc = parseJ(discRaw, null);
@@ -787,12 +846,35 @@ export default async function handler(req) {
     let total = 0;
     for (let i = messages.length - 1; i >= 0; i--) { total += JSON.stringify(messages[i].content).length; if (total > 4200000) { messages = messages.slice(i + 1); break; } }
 
-    let acc = null;
+    let acc = null, adminC = admin, plan = 'spark';
     if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
     if (hasStore()) {
-      try { acc = await account(u); } catch (e) { acc = null; }
-      if (acc && needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
-      if (acc && !admin && acc.plan === 'spark' && isPremium(model, await modelRules())) return err('This model is for paid plans', 403, { code: 'premium' });
+      const P = 'u:' + u.uid;
+      try { acc = await account(u, [['GET', P + ':status'], ['GET', 'cfg:models'], ['GET', P + ':mem'], ['GET', P + ':memoff'], ['HGETALL', P + ':convs']]); } catch (e) { acc = null; }
+      if (acc) {
+        plan = acc.plan;
+        const [st, rules, mem, memoff, convs] = acc.extra;
+        adminC = isAdmin(u, u.verified || acc.verified);
+        const stat = parseJ(st, null);
+        if (stat && !adminC) return err('Account ' + stat.s, 403, { code: 'blocked', status: stat.s, support: SUPPORT });
+        if (needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
+        if (!adminC && acc.plan === 'spark' && isPremium(model, parseJ(rules, {}) || {})) return err('This model is for paid plans', 403, { code: 'premium' });
+        // memory: what the assistant knows about the user + the user's other recent chats
+        if (memoff !== '1' && body.memory !== false) {
+          let ctx = '';
+          if (mem) ctx += 'What you remember about this user from earlier conversations (use it naturally when it helps; do not recite it unless asked):\n' + String(mem).slice(0, 2000);
+          const pairs = Array.isArray(convs) ? convs : Object.entries(convs || {}).flat();
+          const others = [];
+          for (let i = 0; i < pairs.length; i += 2) { const v = parseJ(pairs[i + 1], null); if (v && v.id !== body.conv) others.push(v); }
+          others.sort((x, y) => (y.updated || 0) - (x.updated || 0));
+          const lines = others.slice(0, 8).map(c => '- ' + (c.title || '…') + (c.last && c.last !== c.title ? ' — last question: ' + c.last : ''));
+          if (lines.length) ctx += (ctx ? '\n\n' : '') + 'The user\'s other recent chats with you (newest first):\n' + lines.join('\n');
+          if (ctx) {
+            if (messages[0] && messages[0].role === 'system' && typeof messages[0].content === 'string') messages[0] = { role: 'system', content: messages[0].content + '\n\n' + ctx };
+            else messages.unshift({ role: 'system', content: ctx });
+          }
+        }
+      }
       if (acc && !(acc.bonus > 0)) {
         if (acc.w.total && acc.w.used >= acc.w.total) return err('5-hour limit reached', 429, { code: 'limit', which: 'w', resetAt: acc.w.resetAt });
         if (acc.m.used >= acc.m.total) return err('Weekly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
@@ -810,10 +892,11 @@ export default async function handler(req) {
     if (effort === 'fast' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'low';
     if (effort === 'deep' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'high';
     if (body.effort !== 'deep' && simple) payload.max_tokens = 1200;
-    const build = body.mode === 'site';
+    const build = body.mode === 'site' || body.mode === 'code';
 
-    // we count only the new question and the answer, by our own estimate
-    const inTok = countTokens(question) + images * 1000;
+    // tokens: everything the model reads (instructions, memory, the whole chat) + the answer
+    const inTok = messages.reduce((n, m) => n + countTokens(textOf(m)) + imgCount(m) * 1000, 0);
+    const pre = costFor(plan, inTok);
     const r = await upstream(base, key, payload, req.signal);
     if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
 
@@ -821,12 +904,12 @@ export default async function handler(req) {
     if (!r.body || !/event-stream/.test(ct)) {
       const j = await r.json().catch(() => ({}));
       const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      await charge(u, inTok + countTokens(typeof c === 'string' ? c : ''), build);
+      await charge(u, costFor(plan, inTok + countTokens(typeof c === 'string' ? c : '')), build);
       return json(j);
     }
 
     // charge the input right away (so a stopped answer is still counted), the rest when the stream ends
-    charge(u, inTok, false);
+    charge(u, pre, false);
     const dec = new TextDecoder();
     let buf = '', answer = '';
     const ts = new TransformStream({
@@ -840,13 +923,15 @@ export default async function handler(req) {
           const d = line.slice(5).trim(); if (d === '[DONE]') continue;
           try {
             const j = JSON.parse(d);
-            const c = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
-            if (typeof c === 'string') answer += c;
+            const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+            if (typeof dl.content === 'string') answer += dl.content;
+            const rr = dl.reasoning_content || dl.reasoning || dl.thinking;
+            if (typeof rr === 'string') answer += rr;
           } catch (e) {}
         }
       },
       async flush() {
-        await charge(u, countTokens(answer), build && answer.length > 0);
+        await charge(u, Math.max(0, costFor(plan, inTok + countTokens(answer)) - pre), build && answer.length > 0);
       }
     });
     return new Response(r.body.pipeThrough(ts), { status: 200, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } });
