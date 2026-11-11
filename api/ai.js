@@ -4,6 +4,7 @@
 //   KV_REST_API_URL, KV_REST_API_TOKEN — added automatically when Upstash Redis is connected (Storage tab)
 //   ADMIN_EMAILS   (optional)          — e.g. "me@gmail.com"; these accounts get the Cosmos plan
 //   BREVO_API_KEY, MAIL_FROM          — sending 6-digit email codes (MAIL_FROM = sender address confirmed in Brevo)
+//   Admins get an admin panel on the site (#/admin): users, plans, bans, promo codes, sales.
 //   PROMO_CODES    (optional)          — e.g. "MUNDO-START=5000000,MUNDO-ORBIT=plan:orbit:30"
 //                                        (number = bonus tokens, spent before the limits; plan:<id>:<days> = plan for N days)
 // Tokens are counted by Mundora itself from the text of each question and answer (the API's own figures are not used).
@@ -56,7 +57,7 @@ async function verify(req) {
     const now = Date.now() / 1000;
     if (!ok || p.aud !== PROJECT || p.iss !== 'https://securetoken.google.com/' + PROJECT || !p.sub || p.exp < now || p.iat > now + 300) return null;
     const provider = (p.firebase && p.firebase.sign_in_provider) || '';
-    return { uid: p.sub, email: (p.email || '').toLowerCase(), verified: !!p.email_verified, provider, token: tok };
+    return { uid: p.sub, email: (p.email || '').toLowerCase(), name: p.name || '', verified: !!p.email_verified, provider, token: tok };
   } catch (e) { return null; }
 }
 
@@ -77,7 +78,16 @@ async function refCodeOf(uid) {
   let s = ''; for (let i = 0; i < 6; i++) s += A[h[i] % A.length];
   return 'MD-' + s;
 }
-const admins = () => (process.env.ADMIN_EMAILS || '').toLowerCase().split(/[\s,;]+/).filter(Boolean);
+// Gmail ignores dots and "+tags", so pr.otakolov@gmail.com and protakolov@gmail.com are the same mailbox
+function normEmail(e) {
+  e = String(e || '').trim().toLowerCase().replace(/^["'<\s]+|["'>\s]+$/g, '');
+  const i = e.lastIndexOf('@'); if (i < 1) return e;
+  let local = e.slice(0, i), dom = e.slice(i + 1);
+  if (dom === 'gmail.com' || dom === 'googlemail.com') { local = local.split('+')[0].replace(/\./g, ''); dom = 'gmail.com'; }
+  return local + '@' + dom;
+}
+const admins = () => (process.env.ADMIN_EMAILS || '').split(/[\s,;]+/).map(normEmail).filter(x => x.includes('@'));
+const isAdmin = (u, verified) => !!(u.email && verified && admins().includes(normEmail(u.email)));
 
 async function account(u) {
   const P = 'u:' + u.uid, M = ym();
@@ -88,7 +98,7 @@ async function account(u) {
   let plan = 'spark';
   try { const pr = planRaw ? JSON.parse(planRaw) : null; if (pr && PLANS[pr.id] && (!pr.until || pr.until > Date.now())) plan = pr.id; } catch (e) {}
   const verified = u.verified || ev === '1' || ev === 1;
-  if (u.email && verified && admins().includes(u.email)) plan = 'cosmos';
+  if (isAdmin(u, verified)) plan = 'cosmos';
   const L = PLANS[plan], over = Math.max(0, (+inv || 0) - 2);
   return {
     plan,
@@ -180,17 +190,119 @@ async function sendCodeMail(to, code, lang) {
   if (!r.ok) throw new Error('mail ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }
 const CONV_MAX = 300000;
+const SUPPORT = 'mundoraaiapp@gmail.com';
+const ADMIN_ACTIONS = ['plan', 'tokens', 'freeze', 'delete', 'restore', 'reset', 'disc'];
+const now = () => Date.now();
+const parseJ = (v, d) => { try { return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const activeSale = s => s && s.percent > 0 && (!s.until || s.until > now()) ? s : null;
+const MODEL_CACHE = { at: 0, body: null };
 
 export default async function handler(req) {
   const base = (process.env.AI_BASE || '').trim().replace(/\/+$/, '');
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
   // open https://<site>/api/ai?p=health in a browser to check the server setup
-  if (p === 'health') return json({ ok: true, version: 7, ai: !!(base && key), store: hasStore(), mail: hasMail() });
+  if (p === 'health') return json({ ok: true, version: 11, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
 
+  // account status (frozen / deleted) and admin rights
+  let status = null, evFlag = null;
+  if (hasStore()) {
+    try { const [st, ev] = await redis([['GET', 'u:' + u.uid + ':status'], ['GET', 'u:' + u.uid + ':ev']]); status = parseJ(st, null); evFlag = ev; } catch (e) {}
+  }
+  const admin = isAdmin(u, u.verified || evFlag === '1');
+  if (status && !admin && !['usage', 'prefs'].includes(p)) return err('Account ' + status.s, 403, { code: 'blocked', status: status.s, support: SUPPORT });
+
+
+
+  /* ================= ADMIN PANEL ================= */
+  if (p && p.startsWith('admin')) {
+    if (!admin) return err('Not allowed', 403, { code: 'notadmin' });
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const userCard = async uid => {
+      const [email, name, seen, st, inv] = await redis([['GET', 'u:' + uid + ':email'], ['GET', 'u:' + uid + ':name'], ['GET', 'u:' + uid + ':seen'], ['GET', 'u:' + uid + ':status'], ['GET', 'u:' + uid + ':disc']]);
+      if (!email && !name && !seen) return null;
+      const acc = await account({ uid, email: email || '', verified: true });
+      const [pl] = await redis([['GET', 'u:' + uid + ':plan']]);
+      return { uid, email, name, seen: +seen || 0, status: parseJ(st, null), disc: parseJ(inv, null), planInfo: parseJ(pl, null), ...acc };
+    };
+
+    if (p === 'admin-stats' && req.method === 'GET') {
+      const [n] = await redis([['SCARD', 'users']]);
+      return json({ users: +n || 0 });
+    }
+    if (p === 'admin-find' && req.method === 'GET') {
+      const q = String(new URL(req.url).searchParams.get('q') || '').trim();
+      let uid = null;
+      if (q.includes('@')) { const [x] = await redis([['GET', 'em:' + normEmail(q)]]); uid = x; }
+      else if (q) uid = q;
+      const card = uid ? await userCard(uid) : null;
+      if (!card) return err('User not found', 404, { code: 'nouser' });
+      return json(card);
+    }
+    if (p === 'admin-act' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const uid = String(b.uid || ''); const P = 'u:' + uid;
+      if (!uid || !ADMIN_ACTIONS.includes(b.action)) return err('Bad request', 400);
+      if (b.action === 'plan') {
+        if (b.plan === 'spark' || !PLANS[b.plan]) await redis([['DEL', P + ':plan']]);
+        else { const days = Math.max(0, +b.days || 0); await redis([['SET', P + ':plan', JSON.stringify({ id: b.plan, until: days ? now() + days * 86400e3 : 0, by: 'admin' })]]); }
+      }
+      if (b.action === 'tokens') {
+        const n = Math.round(+b.n || 0);
+        const [v] = await redis([['INCRBY', P + ':bonus', n]]);
+        if (+v < 0) await redis([['SET', P + ':bonus', 0]]);
+      }
+      if (b.action === 'disc') {
+        const pc = Math.min(90, Math.max(0, +b.percent || 0)), days = Math.max(1, +b.days || 30);
+        if (!pc) await redis([['DEL', P + ':disc']]);
+        else await redis([['SET', P + ':disc', JSON.stringify({ percent: pc, plans: b.plans || 'all', until: now() + days * 86400e3, by: 'admin' })]]);
+      }
+      if (b.action === 'freeze' || b.action === 'delete') await redis([['SET', P + ':status', JSON.stringify({ s: b.action === 'freeze' ? 'frozen' : 'deleted', at: now(), reason: String(b.reason || '').slice(0, 200) })]]);
+      if (b.action === 'restore') await redis([['DEL', P + ':status']]);
+      if (b.action === 'reset') await redis([['DEL', P + ':w'], ['DEL', P + ':m:' + ym()]]);
+      return json(await userCard(uid));
+    }
+    if (p === 'admin-promos' && req.method === 'GET') {
+      const [h] = await redis([['HGETALL', 'promos']]);
+      const list = [];
+      const pairs = Array.isArray(h) ? h : Object.entries(h || {}).flat();
+      for (let i = 0; i < pairs.length; i += 2) { const v = parseJ(pairs[i + 1], null); if (v) list.push(Object.assign({ code: pairs[i] }, v)); }
+      if (list.length) { const uses = await redis(list.map(x => ['GET', 'promo:uses:' + x.code])); list.forEach((x, i) => { x.uses = +uses[i] || 0; }); }
+      list.sort((a, b) => (b.created || 0) - (a.created || 0));
+      return json({ list });
+    }
+    if (p === 'admin-promo' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const code = String(b.code || '').trim().toUpperCase().replace(/\s+/g, '');
+      if (!/^[A-Z0-9_-]{3,32}$/.test(code)) return err('Code: 3–32 letters, digits, - or _', 400, { code: 'badcode' });
+      const type = ['tokens', 'plan', 'discount'].includes(b.type) ? b.type : 'tokens';
+      const v = { type, value: Math.max(0, +b.value || 0), plan: PLANS[b.plan] ? b.plan : 'orbit', days: Math.max(1, +b.days || 30), maxUses: Math.max(0, +b.maxUses || 0), expires: +b.expires || 0, plans: b.plans || 'all', note: String(b.note || '').slice(0, 120), created: now(), off: !!b.off };
+      await redis([['HSET', 'promos', code, JSON.stringify(v)]]);
+      return json({ ok: true, code });
+    }
+    if (p === 'admin-promo-del' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const code = String(b.code || '').toUpperCase();
+      await redis([['HDEL', 'promos', code], ['DEL', 'promo:uses:' + code]]);
+      return json({ ok: true });
+    }
+    if (p === 'admin-sale' && req.method === 'GET') {
+      const [v] = await redis([['GET', 'cfg:sale']]);
+      return json({ sale: parseJ(v, null) });
+    }
+    if (p === 'admin-sale' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const pc = Math.min(90, Math.max(0, +b.percent || 0));
+      if (!pc) { await redis([['DEL', 'cfg:sale']]); return json({ sale: null }); }
+      const sale = { percent: pc, plans: b.plans || 'all', until: +b.until || 0, text: { en: String(b.text_en || '').slice(0, 140), ru: String(b.text_ru || '').slice(0, 140), uk: String(b.text_uk || '').slice(0, 140) } };
+      await redis([['SET', 'cfg:sale', JSON.stringify(sale)]]);
+      return json({ sale });
+    }
+    return err('Not found', 404);
+  }
 
   /* ---- email confirmation with a 6-digit code ---- */
   if (p === 'code-send' && req.method === 'POST') {
@@ -280,35 +392,74 @@ export default async function handler(req) {
   }
 
   if (p === 'models' && req.method === 'GET') {
+    // the list is kept in server memory for 10 minutes, so it comes back instantly
+    if (MODEL_CACHE.body && Date.now() - MODEL_CACHE.at < 600e3) return new Response(MODEL_CACHE.body, { headers: { 'content-type': 'application/json', 'cache-control': 'private, max-age=600' } });
     const r = await fetch(base + '/models', { headers: { authorization: 'Bearer ' + key } });
-    return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json', 'cache-control': 'private, max-age=300' } });
+    const body = await r.text();
+    if (r.ok) { MODEL_CACHE.body = body; MODEL_CACHE.at = Date.now(); }
+    else if (MODEL_CACHE.body) return new Response(MODEL_CACHE.body, { headers: { 'content-type': 'application/json' } });
+    return new Response(body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json', 'cache-control': 'private, max-age=600' } });
   }
 
   if (p === 'usage' && req.method === 'GET') {
     const refCode = await refCodeOf(u.uid);
-    if (!hasStore()) return json({ store: false, needVerify: needsCode(u) && !u.verified, plan: 'spark', refCode, w: { used: 0, total: PLANS.spark.w, resetAt: null }, m: { used: 0, total: PLANS.spark.m, resetAt: nextMonth() }, builds: 0, invites: 0, bonus: 0 });
-    redis([['SET', 'rc:' + refCode, u.uid, 'NX']]).catch(() => {});
+    if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: nextMonth() }, builds: 0, invites: 0, bonus: 0 }); }
+    const name = String(new URL(req.url).searchParams.get('n') || u.name || '').slice(0, 60);
+    redis([['SET', 'rc:' + refCode, u.uid, 'NX'], ['SET', 'em:' + normEmail(u.email), u.uid], ['SET', 'u:' + u.uid + ':email', u.email], ['SET', 'u:' + u.uid + ':name', name], ['SET', 'u:' + u.uid + ':seen', now()], ['SADD', 'users', u.uid]]).catch(() => {});
     const acc = await account(u);
-    return json(Object.assign({ store: true, refCode, provider: u.provider, needVerify: needsCode(u) && !u.verified && !acc.verified }, acc));
+    const [saleRaw, discRaw] = await redis([['GET', 'cfg:sale'], ['GET', 'u:' + u.uid + ':disc']]);
+    const disc = parseJ(discRaw, null);
+    return json(Object.assign({ store: true, refCode, provider: u.provider, admin, support: SUPPORT,
+      needVerify: needsCode(u) && !u.verified && !acc.verified,
+      blocked: status && !admin ? status : null,
+      sale: activeSale(parseJ(saleRaw, null)),
+      disc: disc && disc.percent > 0 && (!disc.until || disc.until > now()) ? disc : null }, acc));
   }
 
   if (p === 'promo' && req.method === 'POST') {
-    if (!hasStore()) return err('Storage is not connected', 503);
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
     const body = await req.json().catch(() => ({}));
     const code = String(body.code || '').trim().toUpperCase();
     const map = {};
-    (process.env.PROMO_CODES || '').split(',').forEach(x => { const i = x.indexOf('='); if (i > 0) map[x.slice(0, i).trim().toUpperCase()] = x.slice(i + 1).trim(); });
+    // PROMO_CODES is read leniently: commas, semicolons or new lines between codes; "=" or ":" after the code; quotes and spaces are ignored
+    String(process.env.PROMO_CODES || '').replace(/^["']|["']$/g, '').split(/[,;\n]+/).forEach(x => {
+      const m = x.trim().replace(/^["']|["']$/g, '').match(/^([A-Za-z0-9_-]+)\s*[=:]\s*(.+)$/);
+      if (m) map[m[1].toUpperCase()] = m[2].trim().replace(/\s+/g, '').replace(/^["']|["']$/g, '');
+    });
+    const P = 'u:' + u.uid;
+    const [pr] = await redis([['HGET', 'promos', code]]);
+    const promo = parseJ(pr, null);
+    if (promo) {
+      if (promo.off) return err('Code not found', 404, { code: 'promo_bad' });
+      if (promo.expires && promo.expires < now()) return err('Code expired', 410, { code: 'promo_expired' });
+      const [uses] = await redis([['GET', 'promo:uses:' + code]]);
+      if (promo.maxUses && +uses >= promo.maxUses) return err('Code is used up', 410, { code: 'promo_out' });
+      const [first] = await redis([['SET', P + ':promo:' + code, 1, 'NX']]);
+      if (first !== 'OK') return err('Code already used', 409, { code: 'promo_used' });
+      await redis([['INCR', 'promo:uses:' + code]]);
+      const days = Math.max(1, +promo.days || 30);
+      if (promo.type === 'plan' && PLANS[promo.plan]) {
+        await redis([['SET', P + ':plan', JSON.stringify({ id: promo.plan, until: now() + days * 86400e3 })]]);
+        return json({ ok: true, plan: promo.plan, days });
+      }
+      if (promo.type === 'discount') {
+        await redis([['SET', P + ':disc', JSON.stringify({ percent: Math.min(90, Math.max(1, +promo.value || 0)), plans: promo.plans || 'all', until: now() + days * 86400e3, code })]]);
+        return json({ ok: true, discount: +promo.value, days });
+      }
+      const n = Math.max(0, Math.round(+promo.value || 0));
+      await redis([['INCRBY', P + ':bonus', n]]);
+      return json({ ok: true, tokens: n });
+    }
     const val = map[code];
     if (!code || !val) return err('Code not found', 404, { code: 'promo_bad' });
-    const P = 'u:' + u.uid;
     const [first] = await redis([['SET', P + ':promo:' + code, 1, 'NX']]);
     if (first !== 'OK') return err('Code already used', 409, { code: 'promo_used' });
-    const pl = val.match(/^plan:(\w+):(\d+)$/i);
+    const pl = val.match(/^(?:plan:)?(orbit|nova|cosmos):(\d+)$/i);
     if (pl && PLANS[pl[1].toLowerCase()]) {
       await redis([['SET', P + ':plan', JSON.stringify({ id: pl[1].toLowerCase(), until: Date.now() + (+pl[2]) * 86400e3 })]]);
       return json({ ok: true, plan: pl[1].toLowerCase(), days: +pl[2] });
     }
-    const n = Math.max(0, parseInt(val, 10) || 0);
+    const n = Math.max(0, parseInt(String(val).replace(/[^\d]/g, ''), 10) || 0);
     if (!n) return err('Code not found', 404, { code: 'promo_bad' });
     await redis([['INCRBY', P + ':bonus', n]]);
     return json({ ok: true, tokens: n });
