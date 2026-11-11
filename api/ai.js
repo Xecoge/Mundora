@@ -194,6 +194,15 @@ const SUPPORT = 'mundoraaiapp@gmail.com';
 const ADMIN_ACTIONS = ['plan', 'tokens', 'freeze', 'delete', 'restore', 'reset', 'disc'];
 const now = () => Date.now();
 const parseJ = (v, d) => { try { return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+// Which models are only for paid plans (Orbit and higher). The admin can change this per model in the admin panel.
+const IMAGE_RE = /(gpt-image|dall-e-3|imagen|flux|recraft|ideogram|seedream|nano-banana|image-preview|-image-|stable-diffusion|sdxl|midjourney)/i;
+const isImageModel = id => IMAGE_RE.test(String(id || '')) && !/dall-e-2/i.test(id);
+// For now every model is free on every plan; the admin panel can still mark a model as paid.
+const defaultPremium = id => false;
+async function modelRules() { try { const [v] = await redis([['GET', 'cfg:models']]); return parseJ(v, {}) || {}; } catch (e) { return {}; } }
+const isPremium = (id, rules) => rules && rules[id] ? rules[id] === 'premium' : defaultPremium(id);
+const IMAGE_TOKENS = 40000;      // one generated image costs this many tokens from the limits
+const ATTACH_MB = { spark: 25, orbit: 100, nova: 250, cosmos: 500 };
 const activeSale = s => s && s.percent > 0 && (!s.until || s.until > now()) ? s : null;
 const MODEL_CACHE = { at: 0, body: null };
 
@@ -202,7 +211,7 @@ export default async function handler(req) {
   const key = (process.env.AI_KEY || '').trim();
   const p = new URL(req.url).searchParams.get('p');
   // open https://<site>/api/ai?p=health in a browser to check the server setup
-  if (p === 'health') return json({ ok: true, version: 11, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 13, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   const u = await verify(req);
   if (!u) return err('Sign in again', 401);
@@ -217,6 +226,8 @@ export default async function handler(req) {
 
 
 
+  if (p === 'status' && req.method === 'GET') return json({ blocked: status && !admin ? status : null, admin });
+
   /* ================= ADMIN PANEL ================= */
   if (p && p.startsWith('admin')) {
     if (!admin) return err('Not allowed', 403, { code: 'notadmin' });
@@ -229,6 +240,19 @@ export default async function handler(req) {
       return { uid, email, name, seen: +seen || 0, status: parseJ(st, null), disc: parseJ(inv, null), planInfo: parseJ(pl, null), ...acc };
     };
 
+    if (p === 'admin-models' && req.method === 'GET') {
+      const rules = await modelRules();
+      let ids = [];
+      try { const j = JSON.parse(MODEL_CACHE.body || 'null') || (await (await fetch(base + '/models', { headers: { authorization: 'Bearer ' + key } })).json()); ids = (Array.isArray(j) ? j : (j.data || j.models || [])).map(m => typeof m === 'string' ? m : m && m.id).filter(Boolean); } catch (e) {}
+      return json({ list: ids.map(id => ({ id, image: isImageModel(id), premium: isPremium(id, rules), custom: !!rules[id] })) });
+    }
+    if (p === 'admin-models' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const rules = await modelRules();
+      if (b.reset) delete rules[b.id]; else rules[String(b.id)] = b.premium ? 'premium' : 'free';
+      await redis([['SET', 'cfg:models', JSON.stringify(rules)]]);
+      return json({ ok: true });
+    }
     if (p === 'admin-stats' && req.method === 'GET') {
       const [n] = await redis([['SCARD', 'users']]);
       return json({ users: +n || 0 });
@@ -377,7 +401,7 @@ export default async function handler(req) {
     if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
     const c = await req.json().catch(() => null);
     if (!c || !/^[\w-]{4,40}$/.test(String(c.id || ''))) return err('Bad request', 400);
-    const full = JSON.stringify({ id: c.id, title: String(c.title || '').slice(0, 80), mode: c.mode, model: c.model, created: +c.created || Date.now(), updated: +c.updated || Date.now(), messages: Array.isArray(c.messages) ? c.messages.slice(-120) : [] });
+    const full = JSON.stringify({ id: c.id, title: String(c.title || '').slice(0, 80), mode: c.mode, kind: c.kind || null, model: c.model, created: +c.created || Date.now(), updated: +c.updated || Date.now(), messages: Array.isArray(c.messages) ? c.messages.slice(-120) : [] });
     if (full.length > CONV_MAX) return err('Conversation is too large', 413);
     const meta = JSON.stringify({ id: c.id, title: String(c.title || '').slice(0, 80), mode: c.mode, model: c.model, created: +c.created || Date.now(), updated: +c.updated || Date.now() });
     await redis([['SET', 'u:' + u.uid + ':conv:' + c.id, full], ['HSET', 'u:' + u.uid + ':convs', c.id, meta]]);
@@ -391,25 +415,65 @@ export default async function handler(req) {
     return json({ ok: true });
   }
 
+  /* ---- projects (sites, code, games), saved per account ---- */
+  if (p === 'projs' && req.method === 'GET') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const [h] = await redis([['HGETALL', 'u:' + u.uid + ':projs']]);
+    const list = [], pairs = Array.isArray(h) ? h : Object.entries(h || {}).flat();
+    for (let i = 0; i < pairs.length; i += 2) { const v = parseJ(pairs[i + 1], null); if (v) list.push(v); }
+    list.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+    return json({ list: list.slice(0, 300) });
+  }
+  if (p === 'proj' && req.method === 'GET') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const id = String(new URL(req.url).searchParams.get('id') || '').slice(0, 48);
+    const [c] = await redis([['GET', 'u:' + u.uid + ':proj:' + id]]);
+    if (!c) return err('Not found', 404);
+    return new Response(c, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  }
+  if (p === 'proj-save' && req.method === 'POST') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const c = await req.json().catch(() => null);
+    if (!c || !/^[\w-]{4,48}$/.test(String(c.id || ''))) return err('Bad request', 400);
+    const meta = { id: c.id, type: String(c.type || 'code').slice(0, 10), title: String(c.title || '').slice(0, 80), conv: String(c.conv || '').slice(0, 48), created: +c.created || now(), updated: +c.updated || now(), n: Array.isArray(c.versions) ? c.versions.length : 0 };
+    let versions = Array.isArray(c.versions) ? c.versions.slice(-8) : [];
+    let full = JSON.stringify(Object.assign({}, meta, { versions }));
+    while (full.length > CONV_MAX && versions.length > 1) { versions = versions.slice(1); full = JSON.stringify(Object.assign({}, meta, { versions })); }
+    if (full.length > CONV_MAX) return err('Project is too large', 413);
+    await redis([['SET', 'u:' + u.uid + ':proj:' + c.id, full], ['HSET', 'u:' + u.uid + ':projs', c.id, JSON.stringify(meta)]]);
+    return json({ ok: true });
+  }
+  if (p === 'proj-del' && req.method === 'POST') {
+    if (!hasStore()) return err('Storage is not connected', 503, { code: 'nostore' });
+    const b = await req.json().catch(() => ({}));
+    const id = String(b.id || '').slice(0, 48);
+    await redis([['DEL', 'u:' + u.uid + ':proj:' + id], ['HDEL', 'u:' + u.uid + ':projs', id]]);
+    return json({ ok: true });
+  }
+
   if (p === 'models' && req.method === 'GET') {
     // the list is kept in server memory for 10 minutes, so it comes back instantly
-    if (MODEL_CACHE.body && Date.now() - MODEL_CACHE.at < 600e3) return new Response(MODEL_CACHE.body, { headers: { 'content-type': 'application/json', 'cache-control': 'private, max-age=600' } });
-    const r = await fetch(base + '/models', { headers: { authorization: 'Bearer ' + key } });
-    const body = await r.text();
-    if (r.ok) { MODEL_CACHE.body = body; MODEL_CACHE.at = Date.now(); }
-    else if (MODEL_CACHE.body) return new Response(MODEL_CACHE.body, { headers: { 'content-type': 'application/json' } });
-    return new Response(body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json', 'cache-control': 'private, max-age=600' } });
+    if (!(MODEL_CACHE.body && Date.now() - MODEL_CACHE.at < 600e3)) {
+      const r = await fetch(base + '/models', { headers: { authorization: 'Bearer ' + key } });
+      const body = await r.text();
+      if (r.ok) { MODEL_CACHE.body = body; MODEL_CACHE.at = Date.now(); }
+      else if (!MODEL_CACHE.body) return new Response(body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
+    }
+    const rules = hasStore() ? await modelRules() : {};
+    const j = parseJ(MODEL_CACHE.body, {});
+    const ids = (Array.isArray(j) ? j : (j.data || j.models || [])).map(m => typeof m === 'string' ? m : m && (m.id || m.name)).filter(Boolean);
+    return json({ data: ids.map(id => ({ id, premium: isPremium(id, rules), image: isImageModel(id) })) });
   }
 
   if (p === 'usage' && req.method === 'GET') {
     const refCode = await refCodeOf(u.uid);
-    if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: nextMonth() }, builds: 0, invites: 0, bonus: 0 }); }
+    if (!hasStore()) { const pl = isAdmin(u, u.verified) ? 'cosmos' : 'spark'; return json({ store: false, admin, attachMB: ATTACH_MB[pl], needVerify: needsCode(u) && !u.verified, plan: pl, refCode, w: { used: 0, total: PLANS[pl].w, resetAt: null }, m: { used: 0, total: PLANS[pl].m, resetAt: nextMonth() }, builds: 0, invites: 0, bonus: 0 }); }
     const name = String(new URL(req.url).searchParams.get('n') || u.name || '').slice(0, 60);
     redis([['SET', 'rc:' + refCode, u.uid, 'NX'], ['SET', 'em:' + normEmail(u.email), u.uid], ['SET', 'u:' + u.uid + ':email', u.email], ['SET', 'u:' + u.uid + ':name', name], ['SET', 'u:' + u.uid + ':seen', now()], ['SADD', 'users', u.uid]]).catch(() => {});
     const acc = await account(u);
     const [saleRaw, discRaw] = await redis([['GET', 'cfg:sale'], ['GET', 'u:' + u.uid + ':disc']]);
     const disc = parseJ(discRaw, null);
-    return json(Object.assign({ store: true, refCode, provider: u.provider, admin, support: SUPPORT,
+    return json(Object.assign({ store: true, refCode, provider: u.provider, admin, support: SUPPORT, attachMB: ATTACH_MB[acc.plan] || 25,
       needVerify: needsCode(u) && !u.verified && !acc.verified,
       blocked: status && !admin ? status : null,
       sale: activeSale(parseJ(saleRaw, null)),
@@ -484,21 +548,53 @@ export default async function handler(req) {
     return json({ ok: true });
   }
 
+  if (p === 'image' && req.method === 'POST') {
+    const b = await req.json().catch(() => ({}));
+    const model = String(b.model || ''), prompt = String(b.prompt || '').slice(0, 4000);
+    if (!isImageModel(model) || !prompt) return err('Bad request', 400);
+    let acc = null;
+    if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
+    if (hasStore()) {
+      try { acc = await account(u); } catch (e) {}
+      if (acc && needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
+      if (acc && !admin && acc.plan === 'spark' && isPremium(model, await modelRules())) return err('Image generation is for paid plans', 403, { code: 'premium' });
+      if (acc && !(acc.bonus > 0)) {
+        if (acc.w.total && acc.w.used >= acc.w.total) return err('5-hour limit reached', 429, { code: 'limit', which: 'w', resetAt: acc.w.resetAt });
+        if (acc.m.used >= acc.m.total) return err('Monthly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
+      }
+    }
+    const size = /^\d{3,4}x\d{3,4}$/.test(b.size || '') ? b.size : '1024x1024';
+    const send = pl => fetch(base + '/images/generations', { method: 'POST', headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify(pl), signal: req.signal });
+    let r = await send({ model, prompt, n: 1, size });
+    if (r.status === 400) { const t = await r.text(); if (/size/i.test(t)) r = await send({ model, prompt, n: 1 }); else return new Response(t, { status: 400, headers: { 'content-type': 'application/json' } }); }
+    if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
+    const j = await r.json().catch(() => ({}));
+    const imgs = (j.data || []).map(d => d.url ? { url: d.url } : d.b64_json ? { b64: d.b64_json } : null).filter(Boolean);
+    if (!imgs.length) return err('The model returned no image', 502);
+    await charge(u, IMAGE_TOKENS * imgs.length, false);
+    return json({ images: imgs, revised: (j.data && j.data[0] && j.data[0].revised_prompt) || '' });
+  }
+
   if (p === 'chat' && req.method === 'POST') {
     let body;
     try { body = await req.json(); } catch (e) { return err('Bad request', 400); }
     const model = String(body.model || '');
     if (!/^(claude|gpt|chatgpt)/i.test(model.split('/').pop())) return err('Model not allowed', 400);
+    // a message is text, or (for attachments) a list of text and image parts
+    const okPart = x => x && ((x.type === 'text' && typeof x.text === 'string') || (x.type === 'image_url' && x.image_url && /^(data:image\/|https:)/.test(String(x.image_url.url || ''))));
     let messages = (Array.isArray(body.messages) ? body.messages : [])
-      .filter(m => m && /^(system|user|assistant)$/.test(m.role) && typeof m.content === 'string').slice(-40);
+      .filter(m => m && /^(system|user|assistant)$/.test(m.role) && (typeof m.content === 'string' || (Array.isArray(m.content) && m.content.length && m.content.every(okPart)))).slice(-40);
+    const textOf = m => typeof m.content === 'string' ? m.content : m.content.filter(x => x.type === 'text').map(x => x.text).join('\n');
+    const imgCount = m => typeof m.content === 'string' ? 0 : m.content.filter(x => x.type === 'image_url').length;
     let total = 0;
-    for (let i = messages.length - 1; i >= 0; i--) { total += messages[i].content.length; if (total > 400000) { messages = messages.slice(i + 1); break; } }
+    for (let i = messages.length - 1; i >= 0; i--) { total += JSON.stringify(messages[i].content).length; if (total > 4200000) { messages = messages.slice(i + 1); break; } }
 
     let acc = null;
     if (!hasStore() && needsCode(u) && !u.verified) return err('Confirm your email first', 403, { code: 'verify' });
     if (hasStore()) {
       try { acc = await account(u); } catch (e) { acc = null; }
       if (acc && needsCode(u) && !u.verified && !acc.verified) return err('Confirm your email first', 403, { code: 'verify' });
+      if (acc && !admin && acc.plan === 'spark' && isPremium(model, await modelRules())) return err('This model is for paid plans', 403, { code: 'premium' });
       if (acc && !(acc.bonus > 0)) {
         if (acc.w.total && acc.w.used >= acc.w.total) return err('5-hour limit reached', 429, { code: 'limit', which: 'w', resetAt: acc.w.resetAt });
         if (acc.m.used >= acc.m.total) return err('Monthly limit reached', 429, { code: 'limit', which: 'm', resetAt: acc.m.resetAt });
@@ -508,9 +604,10 @@ export default async function handler(req) {
     const stream = body.stream !== false;
     const payload = { model, messages, stream };
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
-    const question = lastUser ? lastUser.content : '';
+    const question = lastUser ? textOf(lastUser) : '';
+    const images = lastUser ? imgCount(lastUser) : 0;
     let effort = body.effort === 'fast' || body.effort === 'deep' ? body.effort : 'auto';
-    const simple = isSimple(question, body.mode);
+    const simple = !images && isSimple(question, body.mode);
     if (effort === 'auto') effort = simple ? 'fast' : 'normal';
     if (effort === 'fast' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'low';
     if (effort === 'deep' && !NO_EFFORT.has(model)) payload.reasoning_effort = 'high';
@@ -518,7 +615,7 @@ export default async function handler(req) {
     const build = body.mode === 'site';
 
     // we count only the new question and the answer, by our own estimate
-    const inTok = countTokens(question);
+    const inTok = countTokens(question) + images * 1000;
     const r = await upstream(base, key, payload, req.signal);
     if (!r.ok) return new Response(r.body, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json' } });
 
