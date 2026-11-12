@@ -153,8 +153,24 @@ const NO_EFFORT = new Set(); // models whose API rejected reasoning_effort
 const est = s => Math.ceil((s || '').length / 3);
 
 /* ---------- model API ---------- */
+// The provider sometimes fails for a moment (HTTP 500/502/503/504, Cloudflare 520–524/530, a dropped connection):
+// such a request is sent again up to 3 times, with a short pause, before the user sees an error.
+const BUSY_ST = new Set([500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 529, 530]);
+const nap = (ms, signal) => new Promise(r => { const t = setTimeout(r, ms); signal && signal.addEventListener('abort', () => { clearTimeout(t); r(); }, { once: true }); });
 async function upstream(base, key, payload, signal) {
-  const send = p => fetch(base + '/chat/completions', { method: 'POST', headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify(p), signal });
+  const once = p => fetch(base + '/chat/completions', { method: 'POST', headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify(p), signal });
+  const send = async p => {
+    const waits = [1500, 4000, 8000];
+    for (let i = 0; ; i++) {
+      let r = null, e = null;
+      try { r = await once(p); } catch (x) { e = x; }
+      if (signal && signal.aborted) { if (e) throw e; return r; }
+      const busy = e ? !(e && e.name === 'AbortError') : BUSY_ST.has(r.status);
+      if (!busy || i >= waits.length) { if (e) throw e; return r; }
+      if (r) { try { await r.body?.cancel(); } catch (x) {} }
+      await nap(waits[i], signal);
+    }
+  };
   let r = await send(payload);
   if (r.status === 400 && (payload.reasoning_effort || payload.max_tokens)) {
     const t = await r.text();
@@ -491,7 +507,7 @@ export default async function handler(req, ctx) {
     const bin = Uint8Array.from(atob(m[2]), c => c.charCodeAt(0));
     return new Response(bin, { headers: { 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
   }
-  if (p === 'health') return json({ ok: true, version: 30, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 31, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   if (p === 'job-cont' && req.method === 'POST') {
     const b = await req.json().catch(() => ({}));
@@ -1173,6 +1189,7 @@ export default async function handler(req, ctx) {
         const st = r ? r.status : 502;
         let msg = why || 'upstream unavailable';
         if (r) { try { const tx = await r.text(); const j = parseJ(tx, null); msg = (j && j.error && (j.error.message || (typeof j.error === 'string' ? j.error : ''))) || tx.slice(0, 300) || msg; } catch (e) {} }
+        if (BUSY_ST.has(st) && /^\s*(error code:?\s*\d+|<!doctype|<html)/i.test(String(msg))) msg = 'the provider did not answer (tried 4 times)';
         send('data: ' + JSON.stringify({ error: { message: String(msg).slice(0, 300), status: st } }) + '\n\n');
         logErr(u.uid, model, 'HTTP ' + st + ': ' + msg, 'http');
         try { ctrl.close(); } catch (e) {}
