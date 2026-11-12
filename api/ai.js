@@ -201,12 +201,33 @@ async function sendCodeMail(to, code, lang) {
 const CONV_MAX = 300000;
 const rid = (n = 24) => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; return Array.from(crypto.getRandomValues(new Uint8Array(n)), x => A[x % A.length]).join(''); };
 const JOB_RE = /^[A-Za-z0-9]{12,40}$/;
-// "<think>…</think>answer" → reasoning + visible answer (same rules as on the site)
+// "<think>…</think>answer" → reasoning + visible answer (same rules as on the site):
+// only short human notes stay in the reasoning (no code), and a reasoning block that was never closed doesn't swallow the answer
+const CODE_LINE = /^(?:const|let|var|function|return|if|else|for|while|switch|case|import|export|class|def|async|await|try|catch|new|this\.|self\.|print\(|console\.|document\.|window\.|#include|@media|@keyframes|<\/?[a-z][\w-]*[\s>\/]|[{}()\[\];,.#$]|\/\/|\/\*|\*|--|[\w$.]+\s*[+\-*\/]?=[^=])|[;{}(\[,]\s*$|=>|\w\(.*\)\s*;?\s*$/i;
+function cleanThink(t) {
+  const out = []; let fence = false;
+  for (const raw of String(t || '').split('\n')) {
+    const l = raw.trim();
+    if (/^```/.test(l)) { fence = !fence; continue; }
+    if (fence || !l || CODE_LINE.test(l) || !/[A-Za-zА-Яа-яЁёІіЇїЄє]{3,}/.test(l)) continue;
+    out.push(l.length > 240 ? l.slice(0, 237) + '…' : l);
+  }
+  return (out.length > 12 ? out.slice(0, 9).concat(out.slice(-3)) : out).join('\n');
+}
 function splitThinkS(raw) {
   let think = '';
-  let vis = String(raw || '').replace(/<(think|thinking)>([\s\S]*?)(<\/\1>|$)/gi, (_, t, b) => { think += (think ? '\n' : '') + b; return ''; });
+  let vis = String(raw || '').replace(/<(think|thinking)>([\s\S]*?)(<\/\1>|$)/gi, (all, t, b, end) => {
+    let back = '';
+    if (!end) {
+      const f = b.search(/^\s*```/m);
+      if (f >= 0) { back = b.slice(f); b = b.slice(0, f); }
+      else if (b.length > 600) { const ls = b.split('\n'); let k = 0; while (k < ls.length && k < 6 && ls[k].trim().length <= 160 && !CODE_LINE.test(ls[k].trim())) k++; back = ls.slice(k).join('\n'); b = ls.slice(0, k).join('\n'); }
+    }
+    const c = cleanThink(b); think += (think && c ? '\n' : '') + c;
+    return back;
+  });
   const ci = vis.search(/<\/think(ing)?>/i);
-  if (ci >= 0) { think = (vis.slice(0, ci) + '\n' + think).trim(); vis = vis.slice(ci).replace(/<\/think(ing)?>/i, ''); }
+  if (ci >= 0) { const c = cleanThink(vis.slice(0, ci)); think = (c + '\n' + think).trim(); vis = vis.slice(ci).replace(/<\/think(ing)?>/i, ''); }
   return { think: think.trim(), text: vis.replace(/^\s+/, '') };
 }
 /* ---- answers that keep being written without the browser ----
@@ -232,12 +253,17 @@ function sseDelta(j) {
   else if (j && j.type === 'content_block_delta' && j.delta) { if (j.delta.type === 'text_delta') c = j.delta.text || ''; else if (j.delta.type === 'thinking_delta') r = j.delta.thinking || ''; }
   return { c, r };
 }
+// the newest 50 problems with answers, for the admin panel (model, reason, when)
+function logErr(uid, model, msg, code) {
+  if (!hasStore()) return Promise.resolve();
+  return redis([['LPUSH', 'log:err', JSON.stringify({ t: Date.now(), uid, model, msg: String(msg || '').slice(0, 300), code: code || '' })], ['LTRIM', 'log:err', 0, 49]]).catch(() => {});
+}
 const textOnly = msgs => msgs.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : m.content.map(x => x.type === 'text' ? x.text : '[picture]').join('\n') }));
 async function pumpJob(o) {
   // o: r, upAbort, uid, job, convId, model, t0, segStart, raw, native, out ({ctrl, isGone}) | null, plan, mx, inTok, pre, build, seg, messages, key, origin, keepAlive
   const dec = new TextDecoder(), JK = 'job:' + o.job;
-  let buf = '', raw = o.raw || '', native = o.native || '', segOut = '', status = 'done', lastSave = Date.now(), cut = false, errMsg = '';
-  const save = st => redis([['SET', JK, JSON.stringify({ uid: o.uid, status: st, raw, think: native, model: o.model, conv: o.convId, t: o.t0, seg: o.seg, at: Date.now(), error: errMsg }), 'EX', 86400]]);
+  let buf = '', raw = o.raw || '', native = o.native || '', segOut = '', status = 'done', lastSave = Date.now(), cut = false, errMsg = '', errCode = '', finish = '', odd = '';
+  const save = st => redis([['SET', JK, JSON.stringify({ uid: o.uid, status: st, raw, think: native, model: o.model, conv: o.convId, t: o.t0, seg: o.seg, at: Date.now(), error: errMsg, code: errCode, httpStatus: st === 'error' ? 502 : 0 }), 'EX', 86400]]);
   const reader = o.r.body.getReader();
   const timer = o.job ? setTimeout(() => { cut = true; o.upAbort.abort(); reader.cancel().catch(() => {}); }, Math.max(1000, SEG_MS - (Date.now() - o.segStart))) : null;
   try {
@@ -254,10 +280,12 @@ async function pumpJob(o) {
         try {
           const j = JSON.parse(d);
           if ((j.error || j.type === 'error') && !raw && !native) { status = 'error'; errMsg = String((typeof j.error === 'string' ? j.error : j.error && j.error.message) || 'error').slice(0, 300); }
+          const fr = j.choices && j.choices[0] && j.choices[0].finish_reason; if (fr) finish = String(fr);
           const dd = sseDelta(j);
+          if (!dd.c && !dd.r && !fr && !odd && !(j.choices && j.choices[0])) odd = d.slice(0, 160);
           if (dd.c) { raw += dd.c; segOut += dd.c; }
           if (dd.r) { native += dd.r; segOut += dd.r; }
-        } catch (e) {}
+        } catch (e) { if (!odd) odd = d.slice(0, 160); }
       }
       // while nobody watches, save what's written so far (rarely, to keep the database calm)
       const away = !o.out || o.out.isGone();
@@ -270,6 +298,15 @@ async function pumpJob(o) {
   } catch (e) { if (!cut) status = raw || native ? 'done' : 'error'; }
   if (timer) clearTimeout(timer);
   if (status === 'error' && (raw || native)) status = 'done';
+  // the model finished but wrote nothing: say why (the site retries once by itself)
+  if (status === 'done' && !cut && !splitThinkS(raw).text.trim()) {
+    status = 'error'; errCode = 'empty';
+    errMsg = (raw.trim() || native.trim() ? 'the model only thought and wrote no answer' : 'the model sent no text') + (finish ? ' (finish_reason: ' + finish + ')' : '') + (odd ? ' — ' + odd : '');
+  }
+  if (status === 'error') {
+    if (o.out && !o.out.isGone()) { try { o.out.ctrl.enqueue(new TextEncoder().encode('data: ' + JSON.stringify({ error: { message: errMsg || 'error', status: 502, code: errCode } }) + '\n\n')); } catch (e) {} }
+    logErr(o.uid, o.model, errMsg || 'error', errCode || 'stream');
+  }
   // tokens of this part: what the model read + what it wrote
   const used = o.seg === 1 ? Math.max(0, o.mx * costFor(o.plan, o.inTok + countTokens(segOut)) - o.pre) : o.mx * costFor(o.plan, o.inTok + countTokens(segOut));
   await charge({ uid: o.uid }, used, o.build && o.seg === 1 && raw.length > 0).catch(() => {});
@@ -304,7 +341,8 @@ async function pumpJob(o) {
       const m = conv && Array.isArray(conv.messages) && conv.messages.find(x => x && x.job === o.job);
       if (m && m.pending) {
         const sp = splitThinkS(raw);
-        m.text = sp.text; m.think = (native.trim() + (native.trim() && sp.think ? '\n' : '') + sp.think).trim().slice(0, 12000);
+        const nt = cleanThink(native);
+        m.text = sp.text; m.think = (nt + (nt && sp.think ? '\n' : '') + sp.think).trim().slice(0, 12000);
         if (m.think) m.thinkMs = Math.min(Date.now() - o.t0, 600000);
         if (status === 'stopped') m.stopped = true;
         delete m.pending; conv.updated = Date.now();
@@ -453,7 +491,7 @@ export default async function handler(req, ctx) {
     const bin = Uint8Array.from(atob(m[2]), c => c.charCodeAt(0));
     return new Response(bin, { headers: { 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
   }
-  if (p === 'health') return json({ ok: true, version: 28, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
+  if (p === 'health') return json({ ok: true, version: 30, ai: !!(base && key), store: hasStore(), mail: hasMail(), admins: admins().length });
   if (!base || !key) return err('Server is not configured: add AI_BASE and AI_KEY in Vercel settings', 500);
   if (p === 'job-cont' && req.method === 'POST') {
     const b = await req.json().catch(() => ({}));
@@ -462,6 +500,8 @@ export default async function handler(req, ctx) {
     const [jm, jj] = await redis([['GET', 'jobm:' + id], ['GET', 'job:' + id]]);
     const M = parseJ(jm, null), J = parseJ(jj, null);
     if (!M || !J || J.status !== 'run') return json({ ok: false });
+    // the model was still inside an unclosed reasoning block: close it, the next part is the answer
+    if (/<(think|thinking)>(?![\s\S]*<\/(think|thinking)>)/i.test(J.raw || '') && !/```/.test(J.raw || '')) J.raw = (J.raw || '') + '</think>';
     const sofar = splitThinkS(J.raw || '').text;
     const messages = M.messages.concat([{ role: 'assistant', content: sofar || '…' }, { role: 'user', content: CONT_PROMPT }]);
     const inTok = messages.reduce((n, m) => n + countTokens(m.content), 0);
@@ -532,6 +572,15 @@ export default async function handler(req, ctx) {
       await redis([['SET', 'cfg:models', JSON.stringify(rules)]]);
       return json({ ok: true });
     }
+    if (p === 'admin-errors' && req.method === 'GET') {
+      const [list] = await redis([['LRANGE', 'log:err', 0, 49]]);
+      const items = (list || []).map(x => parseJ(x, null)).filter(Boolean);
+      const uids = [...new Set(items.map(x => x.uid).filter(Boolean))];
+      const mails = uids.length ? await redis(uids.map(id => ['GET', 'u:' + id + ':email'])).catch(() => []) : [];
+      const em = {}; uids.forEach((id, k) => { em[id] = mails[k] || ''; });
+      return json({ list: items.map(x => Object.assign(x, { email: em[x.uid] || '' })) });
+    }
+    if (p === 'admin-errors-clear' && req.method === 'POST') { await redis([['DEL', 'log:err']]); return json({ ok: true }); }
     if (p === 'admin-stats' && req.method === 'GET') {
       const t0 = now();
       const [n, day, week, promos, sale, ids] = await redis([['SCARD', 'users'], ['ZCOUNT', 'users:seen', t0 - 86400e3, '+inf'], ['ZCOUNT', 'users:seen', t0 - 7 * 86400e3, '+inf'], ['HLEN', 'promos'], ['GET', 'cfg:sale'], ['ZREVRANGE', 'tks', 0, 200]]);
@@ -1125,6 +1174,7 @@ export default async function handler(req, ctx) {
         let msg = why || 'upstream unavailable';
         if (r) { try { const tx = await r.text(); const j = parseJ(tx, null); msg = (j && j.error && (j.error.message || (typeof j.error === 'string' ? j.error : ''))) || tx.slice(0, 300) || msg; } catch (e) {} }
         send('data: ' + JSON.stringify({ error: { message: String(msg).slice(0, 300), status: st } }) + '\n\n');
+        logErr(u.uid, model, 'HTTP ' + st + ': ' + msg, 'http');
         try { ctrl.close(); } catch (e) {}
         if (job) await redis([['SET', 'job:' + job, JSON.stringify({ uid: u.uid, status: 'error', raw: '', think: '', error: String(msg).slice(0, 300), httpStatus: st, model, conv: convId, t: t0, seg: 1, at: Date.now() }), 'EX', 86400]]).catch(() => {});
         return;
@@ -1153,7 +1203,7 @@ export default async function handler(req, ctx) {
     const [j] = await redis([['GET', 'job:' + id]]);
     const o = parseJ(j, null);
     if (!o || o.uid !== u.uid) return err('Not found', 404, { code: 'nojob' });
-    return json({ status: o.status, raw: o.raw || '', think: o.think || '', model: o.model, at: o.at, error: o.error || '', httpStatus: o.httpStatus || 0 });
+    return json({ status: o.status, raw: o.raw || '', think: o.think || '', model: o.model, t: o.t, at: o.at, error: o.error || '', code: o.code || '', httpStatus: o.httpStatus || 0 });
   }
   if (p === 'job-stop' && req.method === 'POST') {
     const b = await req.json().catch(() => ({}));
